@@ -309,30 +309,26 @@ export default function DistrictMap({
     const map = mapRef.current;
     if (!L || !map) return;
 
-    if (bounds) map.fitBounds(bounds, { padding: [32, 48], maxZoom: 11 });
+    if (bounds) map.fitBounds(bounds, { padding: [32, 48], maxZoom: 11, animate: true });
 
-    // GeoJSON과 정당 데이터를 병렬 fetch
-    let distGeoJson = distCacheRef.current.get(sidoCode);
-    const [geoJsonResult, membersResult] = await Promise.allSettled([
-      distGeoJson
-        ? Promise.resolve(distGeoJson)
-        : fetch(`/data/districts/${sidoCode}.geojson`, { cache: 'no-store' })
-            .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-            .then(data => { distCacheRef.current.set(sidoCode, data); return data; }),
-      memberApi.search({ sido }),
-    ]);
+    // GeoJSON fetch (캐시 우선)
+    const cachedGeoJson = distCacheRef.current.get(sidoCode);
+    const geoJsonPromise: Promise<any> = cachedGeoJson
+      ? Promise.resolve(cachedGeoJson)
+      : fetch(`/data/districts/${sidoCode}.geojson`)
+          .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+          .then(data => { distCacheRef.current.set(sidoCode, data); return data; });
 
-    if (geoJsonResult.status === 'rejected') return;
-    distGeoJson = geoJsonResult.value;
+    // 정당 데이터 fetch (GeoJSON과 독립적으로 병렬 진행)
+    const membersPromise = memberApi.search({ sido });
 
-    // 정당 색상 맵 구성
-    const pm = new Map<string, string>();
-    if (membersResult.status === 'fulfilled') {
-      for (const m of membersResult.value) {
-        if (m.sggCode) pm.set(m.sggCode, getPartyColor(m.party));
-      }
+    // GeoJSON 도착 즉시 레이어 교체 (정당색 없이 먼저 그림)
+    let distGeoJson: any;
+    try {
+      distGeoJson = await geoJsonPromise;
+    } catch {
+      return;
     }
-    partyMapRef.current = pm;
 
     sidoLayerRef.current?.remove();
     districtLayerRef.current?.remove();
@@ -345,19 +341,40 @@ export default function DistrictMap({
     setViewMode('district');
     setActiveSido(sido);
     onViewModeChange?.('district', sido);
-
-    // 지도 클릭으로 진입한 경우 셀렉트 동기화
     setSelectSido(sidoCode);
     setSelectDistrict('');
 
-    // 선거구 옵션이 없으면 로드
-    if (distGeoJson) {
-      const opts: { name: string; sggCode: string }[] = distGeoJson.features
-        .map((f: any) => ({ name: f.properties.SGG ?? f.properties.SIDO_SGG ?? '', sggCode: f.properties.SGG_Code ?? '' }))
-        .filter((o: { name: string; sggCode: string }) => o.sggCode)
-        .sort((a: { name: string; sggCode: string }, b: { name: string; sggCode: string }) => a.name.localeCompare(b.name, 'ko'));
-      setDistrictOptions(opts);
-    }
+    // 선거구 드롭다운 옵션 구성
+    const opts: { name: string; sggCode: string }[] = distGeoJson.features
+      .map((f: any) => ({ name: f.properties.SGG ?? f.properties.SIDO_SGG ?? '', sggCode: f.properties.SGG_Code ?? '' }))
+      .filter((o: { name: string; sggCode: string }) => o.sggCode)
+      .sort((a: { name: string; sggCode: string }, b: { name: string; sggCode: string }) => a.name.localeCompare(b.name, 'ko'));
+    setDistrictOptions(opts);
+
+    // 정당색 도착 후 기존 레이어에 in-place 적용 (레이어 재생성 없음)
+    membersPromise.then(members => {
+      // 다른 전환이 일어났다면 적용 무시
+      if (districtLayerRef.current !== layer) return;
+
+      const pm = new Map<string, string>();
+      for (const m of members) {
+        if (m.sggCode) pm.set(m.sggCode, getPartyColor(m.party));
+      }
+      partyMapRef.current = pm;
+
+      const c = getColors();
+      layer.eachLayer((lyr: any) => {
+        const sgg = lyr.feature?.properties?.SGG_Code;
+        if (!sgg) return;
+        const pc = pm.get(sgg);
+        const isSel = sgg === selectedRef.current;
+        if (isSel) {
+          lyr.setStyle({ fillColor: selectedPartyColorRef.current ?? pc ?? c.selected, fillOpacity: 0.88, color: c.selectedBorder, weight: 1.8 });
+        } else if (pc) {
+          lyr.setStyle({ fillColor: pc, fillOpacity: 0.28, color: c.idleBorder, weight: 1.2 });
+        }
+      });
+    }).catch(() => {});
   };
 
   // ── 시/도 뷰로 전환 ──────────────────────────────────────────
@@ -380,7 +397,7 @@ export default function DistrictMap({
     layer.addTo(map);
     sidoLayerRef.current = layer;
 
-    map.fitBounds(layer.getBounds(), { padding: [16, 32], maxZoom: 9 });
+    map.fitBounds(layer.getBounds(), { padding: [16, 32], maxZoom: 9, animate: true });
     viewModeRef.current = 'sido';
     setViewMode('sido');
     setActiveSido(null);
@@ -416,25 +433,6 @@ export default function DistrictMap({
     }
 
     await showDistrictView(sidoName, sidoCode, bounds);
-
-    // 선거구 옵션 로드
-    setDistrictLoading(true);
-    try {
-      let geoJson = distCacheRef.current.get(sidoCode);
-      if (!geoJson) {
-        const r = await fetch(`/data/districts/${sidoCode}.geojson`, { cache: 'no-store' });
-        if (r.ok) { geoJson = await r.json(); distCacheRef.current.set(sidoCode, geoJson); }
-      }
-      if (geoJson) {
-        const opts: { name: string; sggCode: string }[] = geoJson.features
-          .map((f: any) => ({ name: f.properties.SGG ?? f.properties.SIDO_SGG ?? '', sggCode: f.properties.SGG_Code ?? '' }))
-          .filter((o: { name: string; sggCode: string }) => o.sggCode)
-          .sort((a: { name: string; sggCode: string }, b: { name: string; sggCode: string }) => a.name.localeCompare(b.name, 'ko'));
-        setDistrictOptions(opts);
-      }
-    } finally {
-      setDistrictLoading(false);
-    }
   };
 
   // ── 셀렉트: 선거구 선택 ──────────────────────────────────────
@@ -461,7 +459,7 @@ export default function DistrictMap({
           zoomControl: true,
           maxBounds: koreaBounds, maxBoundsViscosity: 1.0,
           minZoom: 6, maxZoom: 13,
-          boxZoom: false, zoomAnimationThreshold: 4,
+          boxZoom: false, zoomAnimationThreshold: 10,
         });
         mapRef.current = map;
 
@@ -472,7 +470,7 @@ export default function DistrictMap({
         map.on('zoomstart movestart', () => setFilterPaused(true));
         map.on('zoomend moveend',     () => setFilterPaused(false));
 
-        const res = await fetch('/data/sido.geojson', { cache: 'no-store' });
+        const res = await fetch('/data/sido.geojson');
         if (!res.ok) throw new Error('시/도 데이터를 불러올 수 없습니다');
         const sidoGeoJson = await res.json();
         if (cancelled) return;
@@ -488,9 +486,30 @@ export default function DistrictMap({
         const sidoLayer = buildSidoLayer(L, sidoGeoJson, showDistrictView);
         sidoLayer.addTo(map);
         sidoLayerRef.current = sidoLayer;
-        map.fitBounds(sidoLayer.getBounds(), { padding: [16, 32], maxZoom: 9 });
+        map.fitBounds(sidoLayer.getBounds(), { padding: [16, 32], maxZoom: 9, animate: true });
 
         setIsLoading(false);
+
+        // sido 로딩 완료 후 모든 district GeoJSON 백그라운드 프리패치
+        const prefetchOrder = [
+          'seoul','gyeonggi','busan','incheon','daegu','daejeon',
+          'gwangju','ulsan','sejong','gangwon','chungbuk','chungnam',
+          'jeonbuk','jeonnam','gyeongbuk','gyeongnam','jeju',
+        ];
+        const prefetch = async () => {
+          for (const code of prefetchOrder) {
+            if (distCacheRef.current.has(code)) continue;
+            try {
+              const r = await fetch(`/data/districts/${code}.geojson`);
+              if (r.ok) distCacheRef.current.set(code, await r.json());
+            } catch { /* 무시 */ }
+          }
+        };
+        if (typeof requestIdleCallback !== 'undefined') {
+          requestIdleCallback(() => { prefetch(); });
+        } else {
+          setTimeout(() => { prefetch(); }, 300);
+        }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : '지도 로딩 실패');

@@ -108,6 +108,14 @@
   transition: none;
 }
 
+/* 새 레이어 등장 시 부드러운 페이드인 */
+.leaflet-overlay-pane svg {
+  transition: opacity 0.18s ease;
+}
+.leaflet-overlay-pane.map-pane-paused svg {
+  transition: none;
+}
+
 /* ── 지역구 호버 glow ── */
 .district-hover {
   filter: drop-shadow(0 0 12px var(--color-map-glow));
