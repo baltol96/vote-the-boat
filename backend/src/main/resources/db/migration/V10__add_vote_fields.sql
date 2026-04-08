@@ -1,0 +1,4 @@
+-- V10: votes 테이블에 의안ID, 의안URL, 소관위원회 컬럼 추가
+ALTER TABLE votes ADD COLUMN IF NOT EXISTS bill_id VARCHAR(100);
+ALTER TABLE votes ADD COLUMN IF NOT EXISTS bill_url VARCHAR(500);
+ALTER TABLE votes ADD COLUMN IF NOT EXISTS curr_committee VARCHAR(100);

@@ -1,0 +1,10 @@
+# 로컬 개발용 - application-local.yml 로 복사 후 실제 키 입력
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+assembly:
+  api:
+    key: YOUR_ASSEMBLY_API_KEY_HERE

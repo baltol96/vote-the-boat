@@ -1,0 +1,21 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Frontend (Next.js)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000,
+      "autoPort": true,
+      "cwd": "frontend"
+    },
+    {
+      "name": "Backend (Spring Boot)",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "gradlew.bat", "bootRun", "--args=--spring.profiles.active=local"],
+      "port": 8080,
+      "autoPort": true,
+      "cwd": "backend"
+    }
+  ]
+}

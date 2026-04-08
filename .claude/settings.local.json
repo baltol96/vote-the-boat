@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \":*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(gradle wrapper:*)",
+      "Bash(\"$HOME/.gradle/wrapper/dists/gradle-8.14.3-bin/cv11ve7ro1n3o1j4so8xd9n66/gradle-8.14.3/bin/gradle\" wrapper:*)",
+      "Bash(ls D:/workspaces/vote-the-boat/backend/gradlew*)",
+      "Bash(python3 -c ':*)",
+      "Bash(python -c ':*)",
+      "Bash(node -e ':*)",
+      "Bash(node -e \"require\\('@turf/dissolve'\\); console.log\\('turf/dissolve ok'\\)\")",
+      "Bash(node -e \"require\\('@turf/union'\\); console.log\\('turf/union ok'\\)\")",
+      "Bash(npm install:*)",
+      "Bash(node scripts/split-geojson.mjs)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e \"require\\('@turf/flatten'\\); console.log\\('ok'\\)\")",
+      "Bash(node -e \"require\\('@turf/union'\\); console.log\\('ok'\\)\")",
+      "Bash(node -e \"require\\('@turf/simplify'\\); console.log\\('ok'\\)\")",
+      "Bash(xargs grep:*)",
+      "Bash(curl -s -X POST http://localhost:8080/api/v1/admin/batch/historical-profiles -H 'X-Admin-Api-Key: dev-secret-key' -H 'Content-Type: application/json')",
+      "Bash(PGPASSWORD=assembly psql:*)",
+      "Bash(docker exec vote-the-boat-db:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/actuator/health)",
+      "Bash(curl:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill:*)",
+      "Bash(cmd:*)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d, indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(node:*)",
+      "Bash(tasklist)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'총 {len\\(d\\)} 건'\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'bills totalElements 샘플: {d[\\\\\"totalElements\\\\\"]}'\\)\")",
+      "Bash(python3 -c \" import sys, json d = json.load\\(sys.stdin\\) for v in d.values\\(\\): if isinstance\\(v, list\\): for item in v: if isinstance\\(item, dict\\) and 'head' in item: print\\('head:', item['head']\\) break \")",
+      "Bash(python -c \" import json, sys data = json.load\\(sys.stdin\\) if data: print\\('첫 의원 monaCode:', data[0]['monaCd']\\) \")",
+      "Bash(./gradlew compileJava)",
+      "Bash(git -C \"D:/workspaces/vote-the-boat\" ls-files --cached backend/build/)"
+    ]
+  }
+}

@@ -1,0 +1,176 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-surface:            #f4f7fb;
+  --color-surface-low:        #eaeff6;
+  --color-surface-high:       #dde4ee;
+  --color-surface-bright:     #ffffff;
+  --color-surface-lowest:     #f8fafd;
+  --color-primary:            #0d6e69;
+  --color-primary-container:  #b8dedd;
+  --color-primary-fixed:      #063d3a;
+  --color-on-surface:         #1a2535;
+  --color-outline-variant:    #8aaabf;
+  --color-secondary-container:#c8d8e8;
+
+  --color-map-bg:             #2a8fa8;
+  --color-map-ocean-center:   #3aa5bf;
+  --color-map-ocean-edge:     #1a6a80;
+  --color-map-idle:           #a8c87a;
+  --color-map-idle-border:    #789a50;
+  --color-map-hover:          #0d6e69;
+  --color-map-hover-border:   #0a5550;
+  --color-map-selected:       #0a5550;
+  --color-map-selected-border:#0d6e69;
+  --color-map-glow:           rgba(13, 110, 105, 0.3);
+  --color-map-cliff-1:        rgba(60, 45, 20, 0.95);
+  --color-map-cliff-2:        rgba(40, 30, 12, 0.85);
+  --color-map-cliff-3:        rgba(25, 18, 8, 0.70);
+}
+
+/* ── 기본 전역 ── */
+@layer base {
+  html, body {
+    background-color: var(--color-surface);
+    font-family: 'Inter', sans-serif;
+    color: var(--color-on-surface);
+  }
+
+  .leaflet-container {
+    @apply w-full h-full;
+    background: var(--color-map-bg) !important;
+    outline: none !important;
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .map-ocean-wrap {
+    background:
+      radial-gradient(ellipse at 55% 45%,
+        var(--color-map-ocean-center) 0%,
+        var(--color-map-bg) 55%,
+        var(--color-map-ocean-edge) 100%
+      ) !important;
+  }
+
+  .leaflet-container:focus,
+  .leaflet-container:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ── Leaflet 줌 컨트롤 ── */
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.leaflet-control-zoom a {
+  background-color: var(--color-surface-low) !important;
+  color: var(--color-primary) !important;
+  border: 1px solid rgba(var(--color-outline-variant), 0.4) !important;
+  font-size: 16px !important;
+  line-height: 28px !important;
+  width: 28px !important;
+  height: 28px !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: var(--color-surface-high) !important;
+  color: var(--color-primary-fixed) !important;
+}
+
+.leaflet-control-attribution {
+  display: none;
+}
+
+/* ── Leaflet 패널 GPU 레이어 승격 ── */
+.leaflet-pane {
+  will-change: transform;
+}
+
+/* ── 지도 오버레이 — 입체 부유 효과 ── */
+.leaflet-overlay-pane {
+  filter:
+    drop-shadow(3px 6px 3px var(--color-map-cliff-1))
+    drop-shadow(0px 20px 28px rgba(0, 0, 0, 0.45));
+  transition: filter 0.15s ease;
+}
+
+/* 줌·이동 중 filter 제거 → GPU transform만 사용해 프레임 드롭 방지 */
+.leaflet-overlay-pane.map-pane-paused {
+  filter: none;
+  transition: none;
+}
+
+/* ── 지역구 호버 glow ── */
+.district-hover {
+  filter: drop-shadow(0 0 12px var(--color-map-glow));
+  cursor: pointer;
+}
+
+/* ── 지역구 툴팁 ── */
+.district-tooltip {
+  background: color-mix(in srgb, var(--color-surface-high) 85%, transparent) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 40%, transparent) !important;
+  border-radius: 8px !important;
+  color: var(--color-on-surface) !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 5px 10px !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1) !important;
+  white-space: nowrap !important;
+  transition: background 0.3s ease, color 0.3s ease !important;
+}
+
+.district-tooltip::before {
+  display: none !important;
+}
+
+/* ── 스크롤바 ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: 4px;
+}
+
+/* ── 검색 input placeholder ── */
+.search-input::placeholder {
+  color: var(--color-on-surface);
+  opacity: 0.35;
+  font-size: 0.72rem;
+}
+
+/* ── 검색 드롭다운 결과 항목 hover ── */
+.search-result-item {
+  transition: background-color 0.15s ease;
+}
+.search-result-item:hover {
+  background: color-mix(in srgb, var(--color-primary-container) 18%, transparent);
+}
+.search-result-item:last-child {
+  border-bottom: none !important;
+}
+
+/* ── 토스트 슬라이드인 ── */
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+.toast-in {
+  animation: toast-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── 사이드 패널 overflow 보정 ── */
+.member-panel > * {
+  min-width: 384px;
+}

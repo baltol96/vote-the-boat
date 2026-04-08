@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const fs=require\\('fs'\\);const d=JSON.parse\\(fs.readFileSync\\('public/data/districts.geojson','utf8'\\)\\);const f=d.features;console.log\\('Total:',f.length\\);const s={};for\\(const x of f\\){const k=x.properties.SIDO||'';s[k]=\\(s[k]||0\\)+1;}for\\(const [k,v] of Object.entries\\(s\\).sort\\(\\)\\)console.log\\(JSON.stringify\\(k\\),v\\);console.log\\('props0:',JSON.stringify\\(f[0].properties\\)\\);\")",
+      "Bash(node -e ':*)",
+      "Bash(node -e \"const fs=require\\('fs'\\);const d=JSON.parse\\(fs.readFileSync\\('public/data/districts.geojson','utf8'\\)\\);const f=d.features;const byS={};for\\(const x of f\\){const s=x.properties.SIDO;if\\(!byS[s]\\)byS[s]=[];if\\(byS[s].length<3\\)byS[s].push\\(x.properties.SGG_Code\\);}for\\(const[s,cs]of Object.entries\\(byS\\)\\)console.log\\(s,'->',cs.join\\(', '\\)\\);\")"
+    ]
+  }
+}

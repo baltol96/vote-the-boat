@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: vote-the-boat-backend
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/assembly}
+    username: ${DB_USERNAME:assembly}
+    password: ${DB_PASSWORD:assembly}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate   # Flyway가 스키마를 관리 — 직접 변경 금지
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_batch_fetch_size: 100
+
+  flyway:
+    baseline-on-migrate: true   # 기존 DB 위에 Flyway 도입 시 안전하게 시작
+    locations: classpath:db/migration
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  batch:
+    job:
+      enabled: false  # 자동 실행 비활성화 (스케줄러·admin API로만 실행)
+    jdbc:
+      initialize-schema: always
+
+assembly:
+  api:
+    base-url: https://open.assembly.go.kr/portal/openapi
+    key: ${ASSEMBLY_API_KEY:9349e48ebe1349cc90c66d3423dc854b}
+
+admin:
+  api-key: ${ADMIN_API_KEY:dev-secret-key}   # 프로덕션에서는 반드시 환경변수로 교체
+
+server:
+  port: ${PORT:8080}
+
+logging:
+  level:
+    com.assembly: DEBUG
+    org.springframework.batch: INFO
