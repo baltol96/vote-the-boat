@@ -32,6 +32,11 @@ public class BatchController {
         return ResponseEntity.ok(batchTriggerUseCase.runVotes());
     }
 
+    @PostMapping("/votes/reload")
+    public ResponseEntity<BatchResult> reloadVotesJob() {
+        return ResponseEntity.ok(batchTriggerUseCase.runVotesReload());
+    }
+
     @PostMapping("/historical-profiles")
     public ResponseEntity<BatchResult> runHistoricalProfilesJob() {
         return ResponseEntity.ok(batchTriggerUseCase.runHistoricalProfiles());

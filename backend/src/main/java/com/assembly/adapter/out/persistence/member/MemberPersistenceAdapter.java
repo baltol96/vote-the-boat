@@ -55,4 +55,14 @@ public class MemberPersistenceAdapter implements MemberPort {
     public List<MemberTerm> findTermsByDistrict(String district) {
         return memberTermRepository.findByDistrictOrderByTermNumberDesc(district);
     }
+
+    @Override
+    public List<String> findAllActiveMonaCds() {
+        return memberJpaRepository.findAllActiveMonaCds();
+    }
+
+    @Override
+    public List<Integer> findDistinctTermNumbersByActiveMembers() {
+        return memberJpaRepository.findDistinctTermNumbersByActiveMembers();
+    }
 }

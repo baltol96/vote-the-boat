@@ -17,6 +17,9 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
         default_batch_fetch_size: 100
+        jdbc.batch_size: 1000
+        order_inserts: true
+        order_updates: true
 
   flyway:
     baseline-on-migrate: true   # 기존 DB 위에 Flyway 도입 시 안전하게 시작

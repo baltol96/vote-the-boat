@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -43,5 +44,11 @@ public class VotePersistenceAdapter implements VotePort {
     @Override
     public List<Vote> saveAll(List<Vote> votes) {
         return voteJpaRepository.saveAll(votes);
+    }
+
+    @Override
+    @Transactional
+    public void deleteAll() {
+        voteJpaRepository.deleteAll();
     }
 }

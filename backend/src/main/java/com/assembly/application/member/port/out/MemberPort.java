@@ -15,4 +15,6 @@ public interface MemberPort {
     List<Member> findByName(String name);
     Optional<String> findDistrictNameBySggCode(String sggCode);
     List<MemberTerm> findTermsByDistrict(String district);
+    List<String> findAllActiveMonaCds();
+    List<Integer> findDistinctTermNumbersByActiveMembers();
 }

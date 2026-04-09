@@ -29,4 +29,10 @@ public interface MemberJpaRepository extends JpaRepository<Member, Long> {
                               @Param("party") String party);
 
     boolean existsByMonaCd(String monaCd);
+
+    @Query("SELECT m.monaCd FROM Member m WHERE m.status = 'ACTIVE'")
+    List<String> findAllActiveMonaCds();
+
+    @Query("SELECT DISTINCT t.termNumber FROM MemberTerm t WHERE t.member.status = 'ACTIVE'")
+    List<Integer> findDistinctTermNumbersByActiveMembers();
 }

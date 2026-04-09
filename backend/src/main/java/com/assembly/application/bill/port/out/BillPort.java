@@ -14,6 +14,7 @@ public interface BillPort {
     Optional<Bill> findByBillNo(String billNo);
     boolean existsByBillNo(String billNo);
     List<String> findAllBillIds();
+    List<String> findAllBillIdsByAge(String age);
     List<Bill> saveAll(List<Bill> bills);
     Bill save(Bill bill);
 }

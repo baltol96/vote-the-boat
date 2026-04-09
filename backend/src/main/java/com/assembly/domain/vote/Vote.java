@@ -59,10 +59,13 @@ public class Vote {
     @Column(length = 100)
     private String currCommittee;
 
+    @Column(length = 5)
+    private String age; // 대수 (예: "21", "22")
+
     @Builder
     public Vote(String monaCd, String billNo, String billName,
                 LocalDate voteDt, VoteResult result,
-                String billId, String billUrl, String currCommittee) {
+                String billId, String billUrl, String currCommittee, String age) {
         this.monaCd = monaCd;
         this.billNo = billNo;
         this.billName = billName;
@@ -71,5 +74,6 @@ public class Vote {
         this.billId = billId;
         this.billUrl = billUrl;
         this.currCommittee = currCommittee;
+        this.age = age;
     }
 }

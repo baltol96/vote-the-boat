@@ -1,7 +1,7 @@
 package com.assembly.application.batch;
 
 import com.assembly.application.batch.port.in.BatchTriggerUseCase;
-import lombok.RequiredArgsConstructor;
+import com.assembly.application.vote.port.out.VotePort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
@@ -23,17 +23,20 @@ public class BatchApplicationService implements BatchTriggerUseCase {
     private final Job collectBillsJob;
     private final Job collectVotesJob;
     private final Job collectHistoricalProfilesJob;
+    private final VotePort votePort;
 
     public BatchApplicationService(JobLauncher jobLauncher,
                                    @Qualifier("collectMembersJob") Job collectMembersJob,
                                    @Qualifier("collectBillsJob") Job collectBillsJob,
                                    @Qualifier("collectVotesJob") Job collectVotesJob,
-                                   @Qualifier("collectHistoricalProfilesJob") Job collectHistoricalProfilesJob) {
+                                   @Qualifier("collectHistoricalProfilesJob") Job collectHistoricalProfilesJob,
+                                   VotePort votePort) {
         this.jobLauncher = jobLauncher;
         this.collectMembersJob = collectMembersJob;
         this.collectBillsJob = collectBillsJob;
         this.collectVotesJob = collectVotesJob;
         this.collectHistoricalProfilesJob = collectHistoricalProfilesJob;
+        this.votePort = votePort;
     }
 
     @Override
@@ -49,6 +52,25 @@ public class BatchApplicationService implements BatchTriggerUseCase {
     @Override
     public BatchResult runVotes() {
         return run(collectVotesJob, "collectVotesJob");
+    }
+
+    @Override
+    public BatchResult runVotesReload() {
+        log.info("votes 테이블 전체 삭제 시작");
+        votePort.deleteAll();
+        log.info("votes 테이블 전체 삭제 완료, 재수집 배치 시작");
+        try {
+            JobParameters params = new JobParametersBuilder()
+                    .addLocalDateTime("runAt", LocalDateTime.now())
+                    .addString("skipDuplicateCheck", "true")
+                    .toJobParameters();
+            JobExecution execution = jobLauncher.run(collectVotesJob, params);
+            log.info("collectVotesJob(reload) 실행: executionId={}, status={}", execution.getId(), execution.getStatus());
+            return new BatchResult("collectVotesJob", execution.getId(), execution.getStatus().name());
+        } catch (Exception e) {
+            log.error("collectVotesJob(reload) 실행 실패", e);
+            throw new RuntimeException("배치 실행 실패: collectVotesJob(reload) - " + e.getMessage(), e);
+        }
     }
 
     @Override

@@ -44,6 +44,11 @@ public class BillPersistenceAdapter implements BillPort {
     }
 
     @Override
+    public List<String> findAllBillIdsByAge(String age) {
+        return billJpaRepository.findAllBillIdsByAge(age);
+    }
+
+    @Override
     public List<Bill> saveAll(List<Bill> bills) {
         return billJpaRepository.saveAll(bills);
     }

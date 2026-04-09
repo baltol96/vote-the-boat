@@ -13,4 +13,5 @@ public interface VotePort {
     long countByMonaCdAndResult(String monaCd, com.assembly.domain.vote.VoteResult result);
     boolean existsByMonaCdAndBillNo(String monaCd, String billNo);
     List<Vote> saveAll(List<Vote> votes);
+    void deleteAll();
 }
