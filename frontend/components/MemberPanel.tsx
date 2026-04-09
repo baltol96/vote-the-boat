@@ -98,15 +98,6 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
     );
   }
 
-  const chartColor = '#0d6e69';
-  const chartBg    = 'rgba(13,110,105,0.08)';
-  const tooltipBg  = '#dde4ee';
-  const tooltipFg  = '#1a2535';
-
-  const attendanceChartData = attendance
-    ? [{ name: '참여율', value: attendance.attendanceRate, fill: chartColor }]
-    : [];
-
   return (
     <div className="flex flex-col h-full bg-surface-low overflow-hidden">
       {/* 헤더 */}
@@ -169,35 +160,6 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {activeTab === 'info' && (
           <div className="flex flex-col gap-5">
-            {attendance && (
-              <div className="rounded-xl p-4" style={{ background: 'rgba(13,110,105,0.06)', border: '1px solid rgba(13,110,105,0.15)' }}>
-                <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-1">표결 참여율</p>
-                <div className="h-32">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadialBarChart
-                      cx="50%" cy="100%"
-                      innerRadius="60%" outerRadius="80%"
-                      barSize={10}
-                      startAngle={180} endAngle={0}
-                      data={attendanceChartData}
-                    >
-                      <RadialBar dataKey="value" background={{ fill: chartBg }} cornerRadius={4} />
-                      <Tooltip
-                        formatter={(v) => [`${v}%`, '참여율']}
-                        contentStyle={{ background: tooltipBg, border: 'none', borderRadius: 8, color: tooltipFg, fontSize: 12 }}
-                      />
-                    </RadialBarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="text-center font-manrope text-3xl font-bold text-primary">
-                  {attendance.attendanceRate.toFixed(1)}%
-                </div>
-                <div className="text-center font-jakarta text-xs text-on-surface/40 mt-1">
-                  {attendance.attendedVotes.toLocaleString()} / {attendance.totalVotes.toLocaleString()} 건
-                </div>
-              </div>
-            )}
-
             <div className="flex flex-col gap-3">
               {[
                 { label: '이메일', value: member.email },
@@ -277,6 +239,10 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
                             innerRadius="55%" outerRadius="80%"
                             dataKey="value"
                             strokeWidth={0}
+                            isAnimationActive={true}
+                            animationBegin={0}
+                            animationDuration={700}
+                            animationEasing="ease-out"
                           >
                             {chartData.map((entry) => (
                               <Cell key={entry.status} fill={entry.color} />
@@ -284,7 +250,7 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
                           </Pie>
                           <Tooltip
                             formatter={(v: number, name: string) => [`${v}건`, name]}
-                            contentStyle={{ background: tooltipBg, border: 'none', borderRadius: 8, color: tooltipFg, fontSize: 11 }}
+                            contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 11 }}
                           />
                         </PieChart>
                       </ResponsiveContainer>
@@ -417,6 +383,35 @@ function VoteTab({ monaCd, attendanceSummary }: { monaCd: string; attendanceSumm
 
   return (
     <div className="flex flex-col gap-3">
+      {attendanceSummary && (
+        <div className="rounded-xl p-4" style={{ background: 'rgba(13,110,105,0.06)', border: '1px solid rgba(13,110,105,0.15)' }}>
+          <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-1">표결 참여율</p>
+          <div className="h-32">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadialBarChart
+                cx="50%" cy="100%"
+                innerRadius="60%" outerRadius="80%"
+                barSize={10}
+                startAngle={180} endAngle={0}
+                data={[{ name: '참여율', value: attendanceSummary.attendanceRate, fill: '#0d6e69' }]}
+              >
+                <RadialBar dataKey="value" background={{ fill: 'rgba(13,110,105,0.08)' }} cornerRadius={4} isAnimationActive={true} animationBegin={0} animationDuration={900} animationEasing="ease-out" />
+                <Tooltip
+                  formatter={(v) => [`${v}%`, '참여율']}
+                  contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 12 }}
+                />
+              </RadialBarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="text-center font-manrope text-3xl font-bold text-primary">
+            {attendanceSummary.attendanceRate.toFixed(1)}%
+          </div>
+          <div className="text-center font-jakarta text-xs text-on-surface/40 mt-1">
+            {attendanceSummary.attendedVotes.toLocaleString()} / {attendanceSummary.totalVotes.toLocaleString()} 건
+          </div>
+        </div>
+      )}
+
       {attendanceSummary && attendanceSummary.totalVotes > 0 && (
         <div className="rounded-xl p-4 mb-1"
              style={{ background: 'rgba(13,110,105,0.05)', border: '1px solid rgba(13,110,105,0.13)' }}>
@@ -427,7 +422,7 @@ function VoteTab({ monaCd, attendanceSummary }: { monaCd: string; attendanceSumm
             <div className="shrink-0 w-24 h-24">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={chartData} cx="50%" cy="50%" innerRadius="55%" outerRadius="80%" dataKey="value" strokeWidth={0}>
+                  <Pie data={chartData} cx="50%" cy="50%" innerRadius="55%" outerRadius="80%" dataKey="value" strokeWidth={0} isAnimationActive={true} animationBegin={0} animationDuration={700} animationEasing="ease-out">
                     {chartData.map((entry) => (
                       <Cell key={entry.key} fill={entry.color} />
                     ))}
