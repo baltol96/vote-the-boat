@@ -35,7 +35,11 @@
       "Bash(python3 -c \" import sys, json d = json.load\\(sys.stdin\\) for v in d.values\\(\\): if isinstance\\(v, list\\): for item in v: if isinstance\\(item, dict\\) and 'head' in item: print\\('head:', item['head']\\) break \")",
       "Bash(python -c \" import json, sys data = json.load\\(sys.stdin\\) if data: print\\('첫 의원 monaCode:', data[0]['monaCd']\\) \")",
       "Bash(./gradlew compileJava)",
-      "Bash(git -C \"D:/workspaces/vote-the-boat\" ls-files --cached backend/build/)"
+      "Bash(git -C \"D:/workspaces/vote-the-boat\" ls-files --cached backend/build/)",
+      "Bash(./mvnw compile:*)",
+      "Bash(./gradlew compileJava -q)",
+      "Bash(git config:*)",
+      "Bash(./gradlew bootJar -q)"
     ]
   }
 }

@@ -18,6 +18,7 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -44,8 +45,8 @@ public class MemberCollectorJob {
     private final DistrictCodeMappingRepository districtCodeMappingRepository;
     private final MemberTermRepository memberTermRepository;
 
-    // 23대 전환 시 이 값만 변경
-    private static final int CURRENT_ASSEMBLY_TERM = 22;
+    @Value("${assembly.current-term}")
+    private int currentAssemblyTerm;
 
     private static final DateTimeFormatter BIRTH_FMT_DASH    = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter BIRTH_FMT_COMPACT = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -106,7 +107,7 @@ public class MemberCollectorJob {
             if (monaCd == null || monaCd.isBlank()) return null;
 
             String gteltEraco = (String) item.get("GTELT_ERACO");
-            boolean isCurrent = isCurrentAssemblyMember(gteltEraco, CURRENT_ASSEMBLY_TERM);
+            boolean isCurrent = isCurrentAssemblyMember(gteltEraco, currentAssemblyTerm);
             List<Integer> allTermNumbers = parseAllTermNumbers(gteltEraco);
 
             // API는 party/district/electionType을 "21대값/22대값" 형태로 대수 순서대로 반환
@@ -122,7 +123,7 @@ public class MemberCollectorJob {
                 String district   = trunc(get(districts, i), 100);
                 String elecType   = trunc(get(elecTypes, i), 20);
                 String sggCode    = null;
-                if (termNumber.equals(CURRENT_ASSEMBLY_TERM)) {
+                if (termNumber.equals(currentAssemblyTerm)) {
                     sggCode = trunc(resolveSggCode(district, mappings), 20);
                     if (sggCode == null && district != null && isCurrent) {
                         log.warn("sggCode 미매핑 선거구: '{}' (monaCd={})", district, monaCd);
@@ -141,7 +142,7 @@ public class MemberCollectorJob {
                     trunc((String) item.get("NAAS_TEL_NO"), 50),
                     trunc((String) item.get("OFFM_RNUM_NO"), 20),
                     isCurrent ? MemberStatus.ACTIVE : MemberStatus.INACTIVE,
-                    isCurrent ? CURRENT_ASSEMBLY_TERM : null,
+                    isCurrent ? currentAssemblyTerm : null,
                     termDetails
             );
         };

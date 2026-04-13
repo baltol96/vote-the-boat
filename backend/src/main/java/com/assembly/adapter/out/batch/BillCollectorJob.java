@@ -43,7 +43,7 @@ public class BillCollectorJob {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    @Value("${assembly.bill.age:22}")
+    @Value("${assembly.current-term}")
     private String assemblyAge;
 
     @Bean

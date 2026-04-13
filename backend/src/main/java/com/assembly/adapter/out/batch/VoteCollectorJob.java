@@ -45,12 +45,13 @@ public class VoteCollectorJob {
     private final MemberPort memberPort;
     private final RestClient assemblyRestClient;
 
+    @Value("${assembly.current-term}")
+    private String currentAssemblyTerm;
+
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd HHmmss");
     private static final int PAGE_SIZE = 1000;
     private static final int CHUNK_SIZE = 1000;
     private static final int THREAD_COUNT = 8;
-
-    private record BillRef(String billId, String age) {}
 
     @Bean
     public Job collectVotesJob() {
@@ -92,7 +93,7 @@ public class VoteCollectorJob {
     @StepScope
     public ItemReader<Map<String, Object>> voteItemReader(
             @Value("#{jobParameters['skipDuplicateCheck']}") String skipDuplicateCheck) {
-        return new VotesByBillReader(assemblyRestClient, billPort, memberPort);
+        return new VotesByBillReader(assemblyRestClient, billPort, currentAssemblyTerm);
     }
 
     @Bean
@@ -129,7 +130,7 @@ public class VoteCollectorJob {
                     .billId((String) item.get("BILL_ID"))
                     .billUrl((String) item.get("BILL_URL"))
                     .currCommittee((String) item.get("CURR_COMMITTEE"))
-                    .age((String) item.get("AGE"))
+                    .age(item.get("AGE") != null ? String.valueOf(item.get("AGE")) : null)
                     .build();
         };
     }
@@ -153,44 +154,35 @@ public class VoteCollectorJob {
         };
     }
 
-    // 현역의원이 속한 대수별 bill을 순회하는 커스텀 ItemReader (thread-safe)
+    // bill을 순회하는 커스텀 ItemReader (thread-safe)
     @SuppressWarnings("unchecked")
     static class VotesByBillReader implements ItemReader<Map<String, Object>> {
 
         private final RestClient restClient;
         private final BillPort billPort;
-        private final MemberPort memberPort;
+        private final String assemblyAge;
 
-        private Iterator<BillRef> billRefIterator;
-        private BillRef currentBillRef;
+        private Iterator<String> billIdIterator;
+        private String currentBillId;
         private int currentPage;
         private Iterator<Map<String, Object>> rowIterator;
         private boolean exhausted = false;
 
-        VotesByBillReader(RestClient restClient, BillPort billPort, MemberPort memberPort) {
+        VotesByBillReader(RestClient restClient, BillPort billPort, String assemblyAge) {
             this.restClient = restClient;
             this.billPort = billPort;
-            this.memberPort = memberPort;
+            this.assemblyAge = assemblyAge;
         }
 
         @Override
         public synchronized Map<String, Object> read() {
             if (exhausted) return null;
 
-            // 초기화: 현역의원의 대수별 bill 목록 구성
-            if (billRefIterator == null) {
-                List<Integer> activeTerms = memberPort.findDistinctTermNumbersByActiveMembers();
-                List<BillRef> billRefs = new ArrayList<>();
-                for (Integer term : activeTerms) {
-                    String age = String.valueOf(term);
-                    List<String> ids = billPort.findAllBillIdsByAge(age);
-                    for (String id : ids) {
-                        billRefs.add(new BillRef(id, age));
-                    }
-                }
-                log.info("표결 수집 대상 의안 {}건 (대수: {})", billRefs.size(), activeTerms);
-                billRefIterator = billRefs.iterator();
-                if (!billRefIterator.hasNext()) { exhausted = true; return null; }
+            if (billIdIterator == null) {
+                List<String> billIds = billPort.findAllBillIds();
+                log.info("표결 수집 대상 의안 {}건 ({}대)", billIds.size(), assemblyAge);
+                billIdIterator = billIds.iterator();
+                if (!billIdIterator.hasNext()) { exhausted = true; return null; }
                 advanceToBill();
             }
 
@@ -199,29 +191,29 @@ public class VoteCollectorJob {
                     return rowIterator.next();
                 }
 
-                List<Map<String, Object>> page = fetchPage(currentBillRef, ++currentPage);
+                List<Map<String, Object>> page = fetchPage(currentBillId, ++currentPage);
                 if (!page.isEmpty()) {
                     rowIterator = page.iterator();
                     continue;
                 }
 
-                if (!billRefIterator.hasNext()) { exhausted = true; return null; }
+                if (!billIdIterator.hasNext()) { exhausted = true; return null; }
                 advanceToBill();
             }
         }
 
         private void advanceToBill() {
-            currentBillRef = billRefIterator.next();
+            currentBillId = billIdIterator.next();
             currentPage = 0;
             rowIterator = null;
         }
 
-        private List<Map<String, Object>> fetchPage(BillRef billRef, int page) {
+        private List<Map<String, Object>> fetchPage(String billId, int page) {
             try {
                 Map<String, Object> response = restClient.get()
                         .uri(u -> u.path("/nojepdqqaweusdfbi")
-                                .queryParam("BILL_ID", billRef.billId())
-                                .queryParam("AGE", billRef.age())
+                                .queryParam("BILL_ID", billId)
+                                .queryParam("AGE", assemblyAge)
                                 .queryParam("pIndex", page)
                                 .queryParam("pSize", PAGE_SIZE)
                                 .build())
@@ -232,8 +224,7 @@ public class VoteCollectorJob {
                 if (response.containsKey("RESULT")) return List.of();
                 return extractRows(response);
             } catch (Exception e) {
-                log.warn("표결 API 호출 실패 billId={} age={} page={}: {}",
-                        billRef.billId(), billRef.age(), page, e.getMessage());
+                log.warn("표결 API 호출 실패 billId={} page={}: {}", billId, page, e.getMessage());
                 return List.of();
             }
         }

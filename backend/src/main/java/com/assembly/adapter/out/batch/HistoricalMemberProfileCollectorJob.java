@@ -11,6 +11,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -39,7 +40,9 @@ public class HistoricalMemberProfileCollectorJob {
     private final RestClient assemblyRestClient;
     private final MemberJpaRepository memberJpaRepository;
 
-    private static final int MAX_TERM  = 22;
+    @Value("${assembly.current-term}")
+    private int currentAssemblyTerm;
+
     private static final int PAGE_SIZE = 100;
     private static final String ENDPOINT = "/nprlapfmaufmqytet";
 
@@ -63,7 +66,7 @@ public class HistoricalMemberProfileCollectorJob {
             int updated = 0;
             int skipped = 0;
 
-            for (int daesu = 1; daesu <= MAX_TERM; daesu++) {
+            for (int daesu = 1; daesu <= currentAssemblyTerm; daesu++) {
                 List<Map<String, Object>> records = fetchAllRecords(daesu);
                 for (Map<String, Object> record : records) {
                     if (applyBioToMember(record)) updated++;
