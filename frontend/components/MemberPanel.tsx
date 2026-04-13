@@ -55,6 +55,7 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [billFilter, setBillFilter] = useState<string | null>(null);
+  const [billRoleTab, setBillRoleTab] = useState<'all' | 'main' | 'co'>('all');
 
   useEffect(() => {
     setLoading(true);
@@ -213,8 +214,15 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
         {activeTab === 'bills' && (
           <div className="flex flex-col gap-3">
             {bills && bills.content.length > 0 && (() => {
+              const mainCount = bills.content.filter(b => b.proposerRole === '대표발의').length;
+              const coCount = bills.content.filter(b => b.proposerRole === '공동발의').length;
+
+              const filteredByRole = bills.content.filter((b) =>
+                billRoleTab === 'all' || (billRoleTab === 'main' ? b.proposerRole === '대표발의' : b.proposerRole === '공동발의')
+              );
+
               const counts: Record<string, number> = {};
-              for (const bill of bills.content) {
+              for (const bill of filteredByRole) {
                 counts[bill.status] = (counts[bill.status] ?? 0) + 1;
               }
               const chartData = Object.entries(counts).map(([status, count]) => ({
@@ -223,60 +231,86 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
                 color: BILL_STATUS_COLOR[status] ?? '#94a3b8',
                 status,
               }));
+
               return (
-                <div className="rounded-xl p-4 mb-1"
-                     style={{ background: 'rgba(13,110,105,0.05)', border: '1px solid rgba(13,110,105,0.13)' }}>
-                  <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-3">
-                    총 {bills.content.length}건 발의 현황
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <div className="shrink-0 w-24 h-24">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={chartData}
-                            cx="50%" cy="50%"
-                            innerRadius="55%" outerRadius="80%"
-                            dataKey="value"
-                            strokeWidth={0}
-                            isAnimationActive={true}
-                            animationBegin={0}
-                            animationDuration={700}
-                            animationEasing="ease-out"
-                          >
-                            {chartData.map((entry) => (
-                              <Cell key={entry.status} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            formatter={(v: number, name: string) => [`${v}건`, name]}
-                            contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 11 }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                      {chartData.map((entry) => {
-                        const isActive = billFilter === entry.status;
-                        return (
-                          <button
-                            key={entry.status}
-                            onClick={() => setBillFilter(isActive ? null : entry.status)}
-                            className="flex items-center gap-2 rounded-lg px-1.5 py-0.5 transition-all text-left"
-                            style={{
-                              background: isActive ? `${entry.color}20` : 'transparent',
-                              outline: isActive ? `1px solid ${entry.color}55` : '1px solid transparent',
-                            }}
-                          >
-                            <span className="shrink-0 w-2.5 h-2.5 rounded-full transition-transform" style={{ backgroundColor: entry.color, transform: isActive ? 'scale(1.25)' : 'scale(1)' }} />
-                            <span className="font-jakarta text-xs truncate" style={{ color: isActive ? entry.color : 'rgba(26,37,53,0.85)' }}>{entry.name}</span>
-                            <span className="ml-auto font-manrope text-xs font-semibold shrink-0" style={{ color: entry.color }}>{entry.value}</span>
-                          </button>
-                        );
-                      })}
+                <>
+                  {/* 대표발의 / 공동발의 탭 */}
+                  <div className="flex rounded-xl overflow-hidden" style={{ border: SEP }}>
+                    {(['all', 'main', 'co'] as const).map((role) => {
+                      const label = role === 'all' ? `전체 ${bills.content.length}` : role === 'main' ? `대표발의 ${mainCount}` : `공동발의 ${coCount}`;
+                      const isActive = billRoleTab === role;
+                      return (
+                        <button
+                          key={role}
+                          onClick={() => { setBillRoleTab(role); setBillFilter(null); }}
+                          className="flex-1 py-2 font-jakarta text-xs font-medium transition-all"
+                          style={{
+                            background: isActive ? 'rgba(13,110,105,0.1)' : '#dde4ee',
+                            color: isActive ? '#0d6e69' : 'rgba(26,37,53,0.45)',
+                            borderRight: role !== 'co' ? SEP : 'none',
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* 발의 현황 그래프 */}
+                  <div className="rounded-xl p-4 mb-1"
+                       style={{ background: 'rgba(13,110,105,0.05)', border: '1px solid rgba(13,110,105,0.13)' }}>
+                    <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-3">
+                      총 {filteredByRole.length}건 발의 현황
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <div className="shrink-0 w-24 h-24">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={chartData}
+                              cx="50%" cy="50%"
+                              innerRadius="55%" outerRadius="80%"
+                              dataKey="value"
+                              strokeWidth={0}
+                              isAnimationActive={true}
+                              animationBegin={0}
+                              animationDuration={700}
+                              animationEasing="ease-out"
+                            >
+                              {chartData.map((entry) => (
+                                <Cell key={entry.status} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              formatter={(v: number, name: string) => [`${v}건`, name]}
+                              contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 11 }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                        {chartData.map((entry) => {
+                          const isActive = billFilter === entry.status;
+                          return (
+                            <button
+                              key={entry.status}
+                              onClick={() => setBillFilter(isActive ? null : entry.status)}
+                              className="flex items-center gap-2 rounded-lg px-1.5 py-0.5 transition-all text-left"
+                              style={{
+                                background: isActive ? `${entry.color}20` : 'transparent',
+                                outline: isActive ? `1px solid ${entry.color}55` : '1px solid transparent',
+                              }}
+                            >
+                              <span className="shrink-0 w-2.5 h-2.5 rounded-full transition-transform" style={{ backgroundColor: entry.color, transform: isActive ? 'scale(1.25)' : 'scale(1)' }} />
+                              <span className="font-jakarta text-xs truncate" style={{ color: isActive ? entry.color : 'rgba(26,37,53,0.85)' }}>{entry.name}</span>
+                              <span className="ml-auto font-manrope text-xs font-semibold shrink-0" style={{ color: entry.color }}>{entry.value}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </>
               );
             })()}
 
@@ -285,6 +319,7 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
             )}
             {bills?.content
               .filter((bill) => billFilter === null || bill.status === billFilter)
+              .filter((bill) => billRoleTab === 'all' || (billRoleTab === 'main' ? bill.proposerRole === '대표발의' : bill.proposerRole === '공동발의'))
               .map((bill) => (
               <div key={bill.billNo} className="rounded-xl p-4" style={{ background: '#dde4ee', border: SEP }}>
                 <p className="font-jakarta text-xs font-medium text-on-surface/90 line-clamp-2 leading-relaxed">

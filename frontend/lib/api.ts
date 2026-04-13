@@ -53,6 +53,7 @@ export interface BillResponse {
   passDt?: string;
   committee?: string;
   summary?: string;
+  proposerRole?: string; // '대표발의' | '공동발의'
 }
 
 export interface VoteResponse {

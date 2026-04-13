@@ -39,7 +39,13 @@
       "Bash(./mvnw compile:*)",
       "Bash(./gradlew compileJava -q)",
       "Bash(git config:*)",
-      "Bash(./gradlew bootJar -q)"
+      "Bash(./gradlew bootJar -q)",
+      "Read(//c/Users/User/Downloads/**)",
+      "Bash(cd /tmp)",
+      "Bash(mkdir -p /c/Users/User/AppData/Local/Temp/xlparser)",
+      "Read(//c/Users/User/AppData/Local/Temp/xlparser/**)",
+      "Read(//tmp/**)",
+      "Bash(grep -oE 'file[^\"]{0,20}\"[0-9]{7,9}\"' /tmp/page.html)"
     ]
   }
 }

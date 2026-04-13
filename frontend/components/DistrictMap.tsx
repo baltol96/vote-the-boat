@@ -290,7 +290,7 @@ export default function DistrictMap({
         const name = feature.properties?.SIDO_SGG || feature.properties?.SGG || '';
         lyr.bindTooltip(name, { sticky: true, className: 'district-tooltip' });
         if (sggCode) layerMapRef.current.set(sggCode, lyr);
-        lyr.on('click', () => { if (sggCode) onDistrictSelect(sggCode); });
+        lyr.on('click', () => { if (sggCode) { setSelectDistrict(sggCode); onDistrictSelect(sggCode); } });
         lyr.on('mouseover', (e: any) => {
           if (hovered && hovered !== e.target) clearStyle(hovered);
           hovered = e.target; applyHover(e.target);
