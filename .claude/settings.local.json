@@ -45,7 +45,23 @@
       "Bash(mkdir -p /c/Users/User/AppData/Local/Temp/xlparser)",
       "Read(//c/Users/User/AppData/Local/Temp/xlparser/**)",
       "Read(//tmp/**)",
-      "Bash(grep -oE 'file[^\"]{0,20}\"[0-9]{7,9}\"' /tmp/page.html)"
+      "Bash(grep -oE 'file[^\"]{0,20}\"[0-9]{7,9}\"' /tmp/page.html)",
+      "Bash(psql -h localhost -p 5433 -U assembly -d assembly -c ':*)",
+      "Bash(export PGPASSWORD=assembly)",
+      "Bash('/c/Program Files/PostgreSQL/17/bin/psql' -h localhost -p 5433 -U assembly -d assembly -t -c ':*)",
+      "Bash('/c/Program Files/PostgreSQL/17/bin/psql' -h localhost -p 5433 -U assembly -d assembly --no-psqlrc -A -t -c 'SET client_encoding='\\\\''UTF8'\\\\''; SELECT DISTINCT propose_dt FROM bills WHERE propose_dt BETWEEN '\\\\''2025-05-01'\\\\'' AND '\\\\''2025-06-05'\\\\'' ORDER BY propose_dt;')",
+      "Bash('/c/Program Files/PostgreSQL/17/bin/psql' -h localhost -p 5433 -U assembly -d assembly -A -t -c ':*)",
+      "Bash('/c/Program Files/PostgreSQL/17/bin/psql' -h localhost -p 5433 -U assembly -d assembly -A -t --client-encoding=UTF8 -c 'SELECT session_no, COUNT\\(*\\) FROM plenary_attendances WHERE member_name = E'\\\\''\\\\uAC15\\\\uACBD\\\\uC219'\\\\'' GROUP BY session_no ORDER BY session_no;')",
+      "WebFetch(domain:open.assembly.go.kr)",
+      "WebSearch",
+      "WebFetch(domain:www.data.go.kr)",
+      "WebFetch(domain:data.popong.com)",
+      "Read(//c/Users/User/.claude/projects/D--workspaces-vote-the-boat/e0dcac3d-edb7-4509-bd69-9ffdc02fab48/tool-results/**)",
+      "Bash(ls -la webfetch-*.bin)",
+      "Bash(python3:*)",
+      "Bash(where python3:*)",
+      "Bash(where python:*)",
+      "Bash(./gradlew --version)"
     ]
   }
 }

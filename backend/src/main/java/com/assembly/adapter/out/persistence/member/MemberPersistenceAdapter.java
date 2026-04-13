@@ -47,6 +47,11 @@ public class MemberPersistenceAdapter implements MemberPort {
     }
 
     @Override
+    public List<Member> findByNameAndParty(String name, String party) {
+        return memberJpaRepository.findByNameAndParty(name, party);
+    }
+
+    @Override
     public Optional<String> findDistrictNameBySggCode(String sggCode) {
         return memberTermRepository.findDistrictNameBySggCode(sggCode);
     }

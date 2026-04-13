@@ -35,4 +35,7 @@ public interface MemberJpaRepository extends JpaRepository<Member, Long> {
 
     @Query("SELECT DISTINCT t.termNumber FROM MemberTerm t WHERE t.member.status = 'ACTIVE'")
     List<Integer> findDistinctTermNumbersByActiveMembers();
+
+    @Query("SELECT DISTINCT m FROM Member m JOIN m.terms t WHERE m.name = :name AND t.party = :party ORDER BY m.id")
+    List<Member> findByNameAndParty(@Param("name") String name, @Param("party") String party);
 }

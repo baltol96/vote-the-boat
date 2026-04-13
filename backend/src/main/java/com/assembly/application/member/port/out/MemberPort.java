@@ -13,6 +13,7 @@ public interface MemberPort {
     boolean existsByMonaCd(String monaCd);
     Member save(Member member);
     List<Member> findByName(String name);
+    List<Member> findByNameAndParty(String name, String party);
     Optional<String> findDistrictNameBySggCode(String sggCode);
     List<MemberTerm> findTermsByDistrict(String district);
     List<String> findAllActiveMonaCds();
