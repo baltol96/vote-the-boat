@@ -370,7 +370,7 @@ export default function Home() {
           <aside
             className="member-panel shrink-0 overflow-hidden flex flex-col"
             style={{
-              width: isPanelOpen && selectedMonaCd ? '384px' : '0px',
+              width: isPanelOpen && selectedMonaCd ? '440px' : '0px',
               transition: 'width 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
               borderLeft: `1px solid ${isPanelOpen ? SEP : 'transparent'}`,
               background: 'var(--color-surface-low)',

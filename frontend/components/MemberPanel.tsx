@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { RadialBarChart, RadialBar, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from 'recharts';
-import { memberApi, districtApi, MemberResponse, BillResponse, VoteResponse, AttendanceResponse, PageResponse, HistoricalRepresentativeResponse } from '@/lib/api';
+import { ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from 'recharts';
+import { memberApi, districtApi, MemberResponse, BillResponse, VoteResponse, AttendanceResponse, AttendanceSummaryResponse, PageResponse, HistoricalRepresentativeResponse } from '@/lib/api';
 import { PARTY_COLORS, PARTY_COLOR_FALLBACK, getPartyColor } from '@/lib/constants';
 import clsx from 'clsx';
 
@@ -51,7 +51,7 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
   const [member, setMember] = useState<MemberResponse | null>(null);
   const [attendance, setAttendance] = useState<AttendanceResponse | null>(null);
   const [bills, setBills] = useState<PageResponse<BillResponse> | null>(null);
-  const [activeTab, setActiveTab] = useState<'info' | 'bills' | 'votes' | 'history'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'attendance' | 'bills' | 'votes' | 'history'>('info');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [billFilter, setBillFilter] = useState<string | null>(null);
@@ -140,19 +140,19 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
       </div>
 
       {/* 탭 */}
-      <div className="flex px-6 pt-4 gap-1">
-        {(['info', 'bills', 'votes', 'history'] as const).map((tab) => (
+      <div className="flex justify-center px-4 pt-4 gap-0.5">
+        {(['info', 'attendance', 'bills', 'votes', 'history'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={clsx(
-              'px-4 py-1.5 rounded-full text-xs font-jakarta font-medium transition-all duration-300',
+              'px-3 py-1.5 rounded-full text-xs font-jakarta font-medium transition-all duration-300 whitespace-nowrap',
               activeTab === tab
                 ? 'bg-primary-container/80 text-primary'
                 : 'text-on-surface/40 hover:text-on-surface/70',
             )}
           >
-            {tab === 'info' ? '기본정보' : tab === 'bills' ? '법안발의' : tab === 'votes' ? '표결현황' : '역대의원'}
+            {tab === 'info' ? '기본정보' : tab === 'attendance' ? '출결현황' : tab === 'bills' ? '법안발의' : tab === 'votes' ? '표결현황' : '역대의원'}
           </button>
         ))}
       </div>
@@ -345,6 +345,7 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
           </div>
         )}
 
+        {activeTab === 'attendance' && <AttendanceTab monaCd={monaCd} />}
         {activeTab === 'votes' && <VoteTab monaCd={monaCd} attendanceSummary={attendance} />}
         {activeTab === 'history' && <HistoryTab sggCode={sggCode} />}
       </div>
@@ -369,18 +370,20 @@ function VoteTab({ monaCd, attendanceSummary }: { monaCd: string; attendanceSumm
 
   useEffect(() => {
     setLoading(true);
-    memberApi.getVotes(monaCd, 0, 30)
+    setVotes([]);
+    setPage(0);
+    memberApi.getVotes(monaCd, 0, 30, resultFilter)
       .then(data => {
         setVotes(data.content);
         setHasMore(!data.last);
         setPage(0);
       })
       .finally(() => setLoading(false));
-  }, [monaCd]);
+  }, [monaCd, resultFilter]);
 
   const loadMore = () => {
     setLoadingMore(true);
-    memberApi.getVotes(monaCd, page + 1, 30)
+    memberApi.getVotes(monaCd, page + 1, 30, resultFilter)
       .then(data => {
         setVotes(prev => [...prev, ...data.content]);
         setHasMore(!data.last);
@@ -414,35 +417,78 @@ function VoteTab({ monaCd, attendanceSummary }: { monaCd: string; attendanceSumm
     key: d.key,
   }));
 
-  const filtered = resultFilter ? votes.filter(v => v.result === resultFilter) : votes;
+  const filterOptions = [
+    { key: null,      label: '전체',  count: attendanceSummary ? attendanceSummary.totalVotes : votes.length },
+    { key: 'YES',     label: '찬성',  count: attendanceSummary?.yesCount ?? 0 },
+    { key: 'NO',      label: '반대',  count: attendanceSummary?.noCount ?? 0 },
+    { key: 'ABSTAIN', label: '기권',  count: attendanceSummary?.abstainCount ?? 0 },
+    { key: 'ABSENT',  label: '불참',  count: attendanceSummary?.absentCount ?? 0 },
+  ].filter(o => o.key === null || o.count > 0);
+
+  const filtered = votes;
 
   return (
     <div className="flex flex-col gap-3">
+      {/* 결과 필터 버튼 */}
+      <div className="flex rounded-xl overflow-hidden" style={{ border: SEP }}>
+        {filterOptions.map((opt, idx) => {
+          const isActive = resultFilter === opt.key;
+          const color = opt.key ? VOTE_RESULT_COLOR[opt.key] : '#0d6e69';
+          return (
+            <button
+              key={String(opt.key)}
+              onClick={() => setResultFilter(opt.key)}
+              className="flex-1 py-2 font-jakarta text-xs font-medium transition-all"
+              style={{
+                background: isActive ? `${color}18` : '#dde4ee',
+                color: isActive ? color : 'rgba(26,37,53,0.45)',
+                borderRight: idx < filterOptions.length - 1 ? SEP : 'none',
+              }}
+            >
+              {opt.label} {opt.count > 0 && <span className="opacity-70">{opt.count}</span>}
+            </button>
+          );
+        })}
+      </div>
+
       {attendanceSummary && (
         <div className="rounded-xl p-4" style={{ background: 'rgba(13,110,105,0.06)', border: '1px solid rgba(13,110,105,0.15)' }}>
           <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-1">표결 참여율</p>
-          <div className="h-32">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart
-                cx="50%" cy="100%"
-                innerRadius="60%" outerRadius="80%"
-                barSize={10}
-                startAngle={180} endAngle={0}
-                data={[{ name: '참여율', value: attendanceSummary.attendanceRate, fill: '#0d6e69' }]}
-              >
-                <RadialBar dataKey="value" background={{ fill: 'rgba(13,110,105,0.08)' }} cornerRadius={4} isAnimationActive={true} animationBegin={0} animationDuration={900} animationEasing="ease-out" />
-                <Tooltip
-                  formatter={(v) => [`${v}%`, '참여율']}
-                  contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 12 }}
-                />
-              </RadialBarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="text-center font-manrope text-3xl font-bold text-primary">
-            {attendanceSummary.attendanceRate.toFixed(1)}%
-          </div>
-          <div className="text-center font-jakarta text-xs text-on-surface/40 mt-1">
-            {attendanceSummary.attendedVotes.toLocaleString()} / {attendanceSummary.totalVotes.toLocaleString()} 건
+          <div className="flex flex-col items-center -mb-2">
+            <div className="w-full" style={{ height: 80 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: '참여율', value: attendanceSummary.attendanceRate },
+                      { name: '미참여', value: 100 - attendanceSummary.attendanceRate },
+                    ]}
+                    cx="50%" cy="100%"
+                    startAngle={180} endAngle={0}
+                    innerRadius="70%" outerRadius="100%"
+                    dataKey="value"
+                    strokeWidth={0}
+                    isAnimationActive={true}
+                    animationBegin={0}
+                    animationDuration={900}
+                    animationEasing="ease-out"
+                  >
+                    <Cell fill="#0d6e69" />
+                    <Cell fill="rgba(13,110,105,0.1)" />
+                  </Pie>
+                  <Tooltip
+                    formatter={(v: number, name: string) => name === '참여율' ? [`${v.toFixed(1)}%`, name] : null as any}
+                    contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 12 }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="font-manrope text-3xl font-bold text-primary leading-none">
+              {attendanceSummary.attendanceRate.toFixed(1)}%
+            </div>
+            <div className="font-jakarta text-xs text-on-surface/40 mt-1">
+              {attendanceSummary.attendedVotes.toLocaleString()} / {attendanceSummary.totalVotes.toLocaleString()} 건
+            </div>
           </div>
         </div>
       )}
@@ -627,6 +673,220 @@ function HistoryTab({ sggCode }: { sggCode?: string }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ─── 출결현황 탭 ────────────────────────────────────────────────────────────────
+
+const ATTENDANCE_STATUS_LABEL: Record<string, string> = {
+  PRESENT:       '출석',
+  ABSENT:        '결석',
+  LEAVE:         '청가',
+  OFFICIAL_TRIP: '출장',
+};
+
+const ATTENDANCE_STATUS_COLOR: Record<string, string> = {
+  PRESENT:       '#34d399',
+  ABSENT:        '#f87171',
+  LEAVE:         '#fbbf24',
+  OFFICIAL_TRIP: '#60a5fa',
+};
+
+function AttendanceTab({ monaCd }: { monaCd: string }) {
+  const [data, setData] = useState<AttendanceSummaryResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    memberApi.getAttendanceSummary(monaCd)
+      .then(setData)
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [monaCd]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-6">
+        <div className="w-6 h-6 rounded-full border-2 animate-spin"
+             style={{ borderColor: 'rgba(13,110,105,0.2)', borderTopColor: '#0d6e69' }} />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return <p className="font-jakarta text-xs text-on-surface/40">출결 데이터가 없습니다.</p>;
+  }
+
+  const { plenary, committees } = data;
+
+  const plenaryStats = [
+    { key: 'PRESENT',       count: plenary.presentCount },
+    { key: 'ABSENT',        count: plenary.absentCount },
+    { key: 'LEAVE',         count: plenary.leaveCount },
+    { key: 'OFFICIAL_TRIP', count: plenary.officialTripCount },
+  ].filter(s => s.count > 0);
+
+  const plenaryRate = plenary.totalCount > 0
+    ? Math.round(plenary.presentCount / plenary.totalCount * 1000) / 10
+    : 0;
+
+  return (
+    <div className="flex flex-col gap-3">
+
+      {/* 본회의 출결 요약 */}
+      <div className="rounded-xl p-4" style={{ background: 'rgba(13,110,105,0.06)', border: '1px solid rgba(13,110,105,0.15)' }}>
+        <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-3">본회의 출석률</p>
+
+        {plenary.totalCount === 0 ? (
+          <p className="font-jakarta text-xs text-on-surface/40">본회의 출결 데이터가 없습니다.</p>
+        ) : (
+          <>
+            <div className="flex flex-col items-center -mb-2">
+              <div className="w-full" style={{ height: 80 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: '출석', value: plenaryRate },
+                        { name: '미출석', value: 100 - plenaryRate },
+                      ]}
+                      cx="50%" cy="100%"
+                      startAngle={180} endAngle={0}
+                      innerRadius="70%" outerRadius="100%"
+                      dataKey="value"
+                      strokeWidth={0}
+                      isAnimationActive={true}
+                      animationBegin={0}
+                      animationDuration={900}
+                      animationEasing="ease-out"
+                    >
+                      <Cell fill="#0d6e69" />
+                      <Cell fill="rgba(13,110,105,0.1)" />
+                    </Pie>
+                    <Tooltip
+                      formatter={(v: number, name: string) => name === '출석' ? [`${v.toFixed(1)}%`, name] : null as any}
+                      contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 12 }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="font-manrope text-3xl font-bold text-primary leading-none">
+                {plenaryRate.toFixed(1)}%
+              </div>
+              <div className="font-jakarta text-xs text-on-surface/40 mt-1">
+                {plenary.presentCount.toLocaleString()} / {plenary.totalCount.toLocaleString()} 회
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* 본회의 출결 통계 */}
+      {plenary.totalCount > 0 && (
+        <div className="rounded-xl p-4" style={{ background: 'rgba(13,110,105,0.05)', border: '1px solid rgba(13,110,105,0.13)' }}>
+          <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-3">
+            총 {plenary.totalCount.toLocaleString()}회 본회의 현황
+          </p>
+          <div className="flex items-center gap-4">
+            <div className="shrink-0 w-24 h-24">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={plenaryStats.map(s => ({ name: ATTENDANCE_STATUS_LABEL[s.key], value: s.count, color: ATTENDANCE_STATUS_COLOR[s.key] }))}
+                    cx="50%" cy="50%" innerRadius="55%" outerRadius="80%"
+                    dataKey="value" strokeWidth={0}
+                    isAnimationActive={true} animationBegin={0} animationDuration={700} animationEasing="ease-out"
+                  >
+                    {plenaryStats.map(s => <Cell key={s.key} fill={ATTENDANCE_STATUS_COLOR[s.key]} />)}
+                  </Pie>
+                  <Tooltip
+                    formatter={(v: number, name: string) => [`${v}회`, name]}
+                    contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 11 }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+              {plenaryStats.map(s => (
+                <div key={s.key} className="flex items-center gap-2 px-1.5 py-0.5">
+                  <span className="shrink-0 w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ATTENDANCE_STATUS_COLOR[s.key] }} />
+                  <span className="font-jakarta text-xs" style={{ color: 'rgba(26,37,53,0.85)' }}>
+                    {ATTENDANCE_STATUS_LABEL[s.key]}
+                  </span>
+                  <span className="ml-auto font-manrope text-xs font-semibold shrink-0" style={{ color: ATTENDANCE_STATUS_COLOR[s.key] }}>
+                    {s.count}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 최근 본회의 출결 목록 */}
+      {plenary.recentRecords.length > 0 && (
+        <div className="rounded-xl p-4" style={{ background: '#dde4ee', border: SEP }}>
+          <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-3">최근 본회의 출결</p>
+          <div className="flex flex-col gap-1.5">
+            {plenary.recentRecords.map((r, i) => {
+              const color = ATTENDANCE_STATUS_COLOR[r.status] ?? '#94a3b8';
+              return (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="font-jakarta text-xs text-on-surface/50 w-24 shrink-0">
+                    {r.meetingDt} ({r.sessionNo}회{r.meetingNo}차)
+                  </span>
+                  <span className="font-jakarta text-xs font-medium px-2 py-0.5 rounded-full"
+                        style={{ background: `${color}22`, color }}>
+                    {ATTENDANCE_STATUS_LABEL[r.status] ?? r.status}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 위원회 출결 */}
+      {committees.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <p className="font-jakarta text-xs font-medium text-on-surface/50">위원회 출결</p>
+          {committees.map((c) => {
+            const rate = c.totalCount > 0 ? Math.round(c.presentCount / c.totalCount * 1000) / 10 : 0;
+            return (
+              <div key={c.committeeName} className="rounded-xl p-3"
+                   style={{ background: '#dde4ee', border: SEP }}>
+                <p className="font-jakarta text-xs font-medium text-on-surface/80 mb-2 truncate">{c.committeeName}</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <div className="w-full h-1.5 rounded-full" style={{ background: 'rgba(13,110,105,0.12)' }}>
+                      <div className="h-1.5 rounded-full transition-all"
+                           style={{ width: `${rate}%`, background: '#0d6e69' }} />
+                    </div>
+                  </div>
+                  <span className="font-manrope text-xs font-semibold text-primary shrink-0 w-12 text-right">
+                    {rate.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="flex gap-3 mt-1.5">
+                  {[
+                    { key: 'PRESENT', count: c.presentCount },
+                    { key: 'ABSENT', count: c.absentCount },
+                    { key: 'LEAVE', count: c.leaveCount },
+                    { key: 'OFFICIAL_TRIP', count: c.officialTripCount },
+                  ].filter(s => s.count > 0).map(s => (
+                    <span key={s.key} className="font-jakarta text-xs"
+                          style={{ color: ATTENDANCE_STATUS_COLOR[s.key] }}>
+                      {ATTENDANCE_STATUS_LABEL[s.key]} {s.count}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
