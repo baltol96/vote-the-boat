@@ -11,6 +11,8 @@ public interface VoteJpaRepository extends JpaRepository<Vote, Long> {
 
     Page<Vote> findByMonaCdOrderByVoteDtDesc(String monaCd, Pageable pageable);
 
+    Page<Vote> findByMonaCdAndResultOrderByVoteDtDesc(String monaCd, com.assembly.domain.vote.VoteResult result, Pageable pageable);
+
     @Query("SELECT COUNT(v) FROM Vote v WHERE v.monaCd = :monaCd")
     long countTotalByMonaCd(@Param("monaCd") String monaCd);
 

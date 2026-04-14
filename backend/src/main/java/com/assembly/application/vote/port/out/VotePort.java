@@ -8,6 +8,8 @@ import java.util.List;
 
 public interface VotePort {
     Page<Vote> findByMonaCdOrderByVoteDtDesc(String monaCd, Pageable pageable);
+
+    Page<Vote> findByMonaCdAndResultOrderByVoteDtDesc(String monaCd, com.assembly.domain.vote.VoteResult result, Pageable pageable);
     long countTotalByMonaCd(String monaCd);
     long countAttendedByMonaCd(String monaCd);
     long countByMonaCdAndResult(String monaCd, com.assembly.domain.vote.VoteResult result);

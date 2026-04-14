@@ -19,8 +19,15 @@ public class VoteQueryService implements GetVoteUseCase {
     private final GetMemberUseCase getMemberUseCase;
 
     @Override
-    public PageResult<VoteRecord> getVotes(String monaCd, Pageable pageable) {
+    public PageResult<VoteRecord> getVotes(String monaCd, String result, Pageable pageable) {
         getMemberUseCase.validateExists(monaCd);
+        if (result != null) {
+            VoteResult voteResult = VoteResult.valueOf(result);
+            return PageResult.of(
+                    votePort.findByMonaCdAndResultOrderByVoteDtDesc(monaCd, voteResult, pageable),
+                    VoteRecord::from
+            );
+        }
         return PageResult.of(
                 votePort.findByMonaCdOrderByVoteDtDesc(monaCd, pageable),
                 VoteRecord::from

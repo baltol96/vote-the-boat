@@ -22,6 +22,11 @@ public class VotePersistenceAdapter implements VotePort {
     }
 
     @Override
+    public Page<Vote> findByMonaCdAndResultOrderByVoteDtDesc(String monaCd, com.assembly.domain.vote.VoteResult result, Pageable pageable) {
+        return voteJpaRepository.findByMonaCdAndResultOrderByVoteDtDesc(monaCd, result, pageable);
+    }
+
+    @Override
     public long countTotalByMonaCd(String monaCd) {
         return voteJpaRepository.countTotalByMonaCd(monaCd);
     }
