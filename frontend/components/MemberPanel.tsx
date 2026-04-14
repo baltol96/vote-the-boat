@@ -697,6 +697,7 @@ function AttendanceTab({ monaCd }: { monaCd: string }) {
   const [data, setData] = useState<AttendanceSummaryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [subTab, setSubTab] = useState<'plenary' | 'committee'>('plenary');
 
   useEffect(() => {
     setLoading(true);
@@ -721,6 +722,40 @@ function AttendanceTab({ monaCd }: { monaCd: string }) {
 
   const { plenary, committees } = data;
 
+  return (
+    <div className="flex flex-col gap-3">
+
+      {/* 서브탭 */}
+      <div className="flex rounded-xl overflow-hidden" style={{ border: SEP }}>
+        {([
+          { key: 'plenary',   label: '본회의' },
+          { key: 'committee', label: '상임위·특위' },
+        ] as const).map(({ key, label }, idx) => (
+          <button
+            key={key}
+            onClick={() => setSubTab(key)}
+            className="flex-1 py-2 font-jakarta text-xs font-medium transition-all"
+            style={{
+              background: subTab === key ? 'rgba(13,110,105,0.1)' : '#dde4ee',
+              color: subTab === key ? '#0d6e69' : 'rgba(26,37,53,0.45)',
+              borderRight: idx === 0 ? SEP : 'none',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* 본회의 탭 */}
+      {subTab === 'plenary' && <PlenaryAttendanceView plenary={plenary} />}
+
+      {/* 상임위·특위 탭 */}
+      {subTab === 'committee' && <CommitteeAttendanceView committees={committees} />}
+    </div>
+  );
+}
+
+function PlenaryAttendanceView({ plenary }: { plenary: AttendanceSummaryResponse['plenary'] }) {
   const plenaryStats = [
     { key: 'PRESENT',       count: plenary.presentCount },
     { key: 'ABSENT',        count: plenary.absentCount },
@@ -734,56 +769,53 @@ function AttendanceTab({ monaCd }: { monaCd: string }) {
 
   return (
     <div className="flex flex-col gap-3">
-
-      {/* 본회의 출결 요약 */}
+      {/* 출석률 요약 */}
       <div className="rounded-xl p-4" style={{ background: 'rgba(13,110,105,0.06)', border: '1px solid rgba(13,110,105,0.15)' }}>
         <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-3">본회의 출석률</p>
 
         {plenary.totalCount === 0 ? (
           <p className="font-jakarta text-xs text-on-surface/40">본회의 출결 데이터가 없습니다.</p>
         ) : (
-          <>
-            <div className="flex flex-col items-center -mb-2">
-              <div className="w-full" style={{ height: 80 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={[
-                        { name: '출석', value: plenaryRate },
-                        { name: '미출석', value: 100 - plenaryRate },
-                      ]}
-                      cx="50%" cy="100%"
-                      startAngle={180} endAngle={0}
-                      innerRadius="70%" outerRadius="100%"
-                      dataKey="value"
-                      strokeWidth={0}
-                      isAnimationActive={true}
-                      animationBegin={0}
-                      animationDuration={900}
-                      animationEasing="ease-out"
-                    >
-                      <Cell fill="#0d6e69" />
-                      <Cell fill="rgba(13,110,105,0.1)" />
-                    </Pie>
-                    <Tooltip
-                      formatter={(v: number, name: string) => name === '출석' ? [`${v.toFixed(1)}%`, name] : null as any}
-                      contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 12 }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="font-manrope text-3xl font-bold text-primary leading-none">
-                {plenaryRate.toFixed(1)}%
-              </div>
-              <div className="font-jakarta text-xs text-on-surface/40 mt-1">
-                {plenary.presentCount.toLocaleString()} / {plenary.totalCount.toLocaleString()} 회
-              </div>
+          <div className="flex flex-col items-center -mb-2">
+            <div className="w-full" style={{ height: 80 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: '출석', value: plenaryRate },
+                      { name: '미출석', value: 100 - plenaryRate },
+                    ]}
+                    cx="50%" cy="100%"
+                    startAngle={180} endAngle={0}
+                    innerRadius="70%" outerRadius="100%"
+                    dataKey="value"
+                    strokeWidth={0}
+                    isAnimationActive={true}
+                    animationBegin={0}
+                    animationDuration={900}
+                    animationEasing="ease-out"
+                  >
+                    <Cell fill="#0d6e69" />
+                    <Cell fill="rgba(13,110,105,0.1)" />
+                  </Pie>
+                  <Tooltip
+                    formatter={(v: number, name: string) => name === '출석' ? [`${v.toFixed(1)}%`, name] : null as any}
+                    contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 12 }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-          </>
+            <div className="font-manrope text-3xl font-bold text-primary leading-none">
+              {plenaryRate.toFixed(1)}%
+            </div>
+            <div className="font-jakarta text-xs text-on-surface/40 mt-1">
+              {plenary.presentCount.toLocaleString()} / {plenary.totalCount.toLocaleString()} 회
+            </div>
+          </div>
         )}
       </div>
 
-      {/* 본회의 출결 통계 */}
+      {/* 출결 상태별 통계 */}
       {plenary.totalCount > 0 && (
         <div className="rounded-xl p-4" style={{ background: 'rgba(13,110,105,0.05)', border: '1px solid rgba(13,110,105,0.13)' }}>
           <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-3">
@@ -825,68 +857,165 @@ function AttendanceTab({ monaCd }: { monaCd: string }) {
         </div>
       )}
 
-      {/* 최근 본회의 출결 목록 */}
-      {plenary.recentRecords.length > 0 && (
-        <div className="rounded-xl p-4" style={{ background: '#dde4ee', border: SEP }}>
-          <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-3">최근 본회의 출결</p>
-          <div className="flex flex-col gap-1.5">
-            {plenary.recentRecords.map((r, i) => {
-              const color = ATTENDANCE_STATUS_COLOR[r.status] ?? '#94a3b8';
-              return (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="font-jakarta text-xs text-on-surface/50 w-24 shrink-0">
-                    {r.meetingDt} ({r.sessionNo}회{r.meetingNo}차)
-                  </span>
-                  <span className="font-jakarta text-xs font-medium px-2 py-0.5 rounded-full"
-                        style={{ background: `${color}22`, color }}>
-                    {ATTENDANCE_STATUS_LABEL[r.status] ?? r.status}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 위원회 출결 */}
-      {committees.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <p className="font-jakarta text-xs font-medium text-on-surface/50">위원회 출결</p>
-          {committees.map((c) => {
-            const rate = c.totalCount > 0 ? Math.round(c.presentCount / c.totalCount * 1000) / 10 : 0;
-            return (
-              <div key={c.committeeName} className="rounded-xl p-3"
-                   style={{ background: '#dde4ee', border: SEP }}>
-                <p className="font-jakarta text-xs font-medium text-on-surface/80 mb-2 truncate">{c.committeeName}</p>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <div className="w-full h-1.5 rounded-full" style={{ background: 'rgba(13,110,105,0.12)' }}>
-                      <div className="h-1.5 rounded-full transition-all"
-                           style={{ width: `${rate}%`, background: '#0d6e69' }} />
-                    </div>
+      {/* 회기별 출결 목록 */}
+      {plenary.recentRecords.length > 0 && (() => {
+        const grouped = plenary.recentRecords.reduce<Record<number, typeof plenary.recentRecords>>((acc, r) => {
+          (acc[r.sessionNo] ??= []).push(r);
+          return acc;
+        }, {});
+        const sessions = Object.keys(grouped).map(Number).sort((a, b) => b - a);
+        return (
+          <div className="rounded-xl p-4" style={{ background: '#dde4ee', border: SEP }}>
+            <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-3">최근 본회의 출결</p>
+            <div className="flex flex-col gap-3">
+              {sessions.map((sessionNo) => (
+                <div key={sessionNo}>
+                  <p className="font-jakarta text-[10px] font-semibold text-on-surface/40 mb-1.5 tracking-wide">
+                    {sessionNo}회
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    {grouped[sessionNo]
+                      .slice()
+                      .sort((a, b) => a.meetingNo - b.meetingNo)
+                      .map((r, i) => {
+                        const color = ATTENDANCE_STATUS_COLOR[r.status] ?? '#94a3b8';
+                        return (
+                          <div key={i} className="flex items-center gap-2 pl-2">
+                            <span className="font-jakarta text-xs text-on-surface/50 shrink-0 w-28">
+                              {r.meetingNo}차 {r.meetingDt}
+                            </span>
+                            <span className="font-jakarta text-xs font-medium px-2 py-0.5 rounded-full"
+                                  style={{ background: `${color}22`, color }}>
+                              {ATTENDANCE_STATUS_LABEL[r.status] ?? r.status}
+                            </span>
+                          </div>
+                        );
+                      })}
                   </div>
-                  <span className="font-manrope text-xs font-semibold text-primary shrink-0 w-12 text-right">
-                    {rate.toFixed(1)}%
-                  </span>
                 </div>
-                <div className="flex gap-3 mt-1.5">
-                  {[
-                    { key: 'PRESENT', count: c.presentCount },
-                    { key: 'ABSENT', count: c.absentCount },
-                    { key: 'LEAVE', count: c.leaveCount },
-                    { key: 'OFFICIAL_TRIP', count: c.officialTripCount },
-                  ].filter(s => s.count > 0).map(s => (
-                    <span key={s.key} className="font-jakarta text-xs"
-                          style={{ color: ATTENDANCE_STATUS_COLOR[s.key] }}>
-                      {ATTENDANCE_STATUS_LABEL[s.key]} {s.count}
-                    </span>
-                  ))}
-                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+function CommitteeCard({ c }: { c: AttendanceSummaryResponse['committees'][number] }) {
+  const [open, setOpen] = useState(false);
+
+  const rate = c.totalCount > 0 ? Math.round(c.presentCount / c.totalCount * 1000) / 10 : 0;
+  const grouped = (c.recentRecords ?? []).reduce<Record<number, typeof c.recentRecords>>((acc, r) => {
+    (acc[r.sessionNo] ??= []).push(r);
+    return acc;
+  }, {});
+  const sessions = Object.keys(grouped).map(Number).sort((a, b) => b - a);
+  const hasRecords = sessions.length > 0;
+
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ background: '#dde4ee', border: SEP }}>
+      {/* 클릭 가능한 요약 영역 */}
+      <button
+        className="w-full text-left p-3"
+        onClick={() => hasRecords && setOpen(o => !o)}
+        style={{ cursor: hasRecords ? 'pointer' : 'default' }}
+      >
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <p className="font-jakarta text-xs font-medium text-on-surface/80 leading-snug">{c.committeeName}</p>
+          {hasRecords && (
+            <span className="shrink-0 mt-0.5 text-on-surface/30 transition-transform duration-200"
+                  style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', display: 'inline-block' }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3 mb-1.5">
+          <div className="flex-1">
+            <div className="w-full h-1.5 rounded-full" style={{ background: 'rgba(13,110,105,0.12)' }}>
+              <div className="h-1.5 rounded-full transition-all"
+                   style={{ width: `${rate}%`, background: '#0d6e69' }} />
+            </div>
+          </div>
+          <span className="font-manrope text-xs font-semibold text-primary shrink-0 w-12 text-right">
+            {rate.toFixed(1)}%
+          </span>
+        </div>
+        <div className="flex gap-3">
+          {[
+            { key: 'PRESENT',       count: c.presentCount },
+            { key: 'ABSENT',        count: c.absentCount },
+            { key: 'LEAVE',         count: c.leaveCount },
+            { key: 'OFFICIAL_TRIP', count: c.officialTripCount },
+          ].filter(s => s.count > 0).map(s => (
+            <span key={s.key} className="font-jakarta text-xs"
+                  style={{ color: ATTENDANCE_STATUS_COLOR[s.key] }}>
+              {ATTENDANCE_STATUS_LABEL[s.key]} {s.count}
+            </span>
+          ))}
+        </div>
+      </button>
+
+      {/* 토글 세부 출결 */}
+      {open && hasRecords && (
+        <div className="flex flex-col gap-2 px-3 pb-3 pt-2"
+             style={{ borderTop: '1px solid rgba(100,135,165,0.2)' }}>
+          {sessions.map((sessionNo) => (
+            <div key={sessionNo}>
+              <p className="font-jakarta text-[10px] font-semibold text-on-surface/40 mb-1 tracking-wide">
+                {sessionNo}회
+              </p>
+              <div className="flex flex-col gap-0.5">
+                {grouped[sessionNo]
+                  .slice()
+                  .sort((a, b) => a.meetingNo - b.meetingNo)
+                  .map((r, i) => {
+                    const color = ATTENDANCE_STATUS_COLOR[r.status] ?? '#94a3b8';
+                    return (
+                      <div key={i} className="flex items-center gap-2 pl-2">
+                        <span className="font-jakarta text-xs text-on-surface/50 shrink-0 w-28">
+                          {r.meetingNo}차 {r.meetingDt}
+                        </span>
+                        <span className="font-jakarta text-xs font-medium px-2 py-0.5 rounded-full"
+                              style={{ background: `${color}22`, color }}>
+                          {ATTENDANCE_STATUS_LABEL[r.status] ?? r.status}
+                        </span>
+                      </div>
+                    );
+                  })}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
 }
+
+function CommitteeAttendanceView({ committees }: { committees: AttendanceSummaryResponse['committees'] }) {
+  if (committees.length === 0) {
+    return <p className="font-jakarta text-xs text-on-surface/40">위원회 출결 데이터가 없습니다.</p>;
+  }
+
+  const standing = committees.filter(c => !c.committeeName.includes('특별위'));
+  const special  = committees.filter(c =>  c.committeeName.includes('특별위'));
+
+  return (
+    <div className="flex flex-col gap-2">
+      {standing.map(c => <CommitteeCard key={c.committeeName} c={c} />)}
+
+      {standing.length > 0 && special.length > 0 && (
+        <div className="flex items-center gap-2 py-1">
+          <div className="flex-1 h-px" style={{ background: 'rgba(100,135,165,0.3)' }} />
+          <span className="font-jakarta text-[10px] font-semibold text-on-surface/35 shrink-0">특별위원회</span>
+          <div className="flex-1 h-px" style={{ background: 'rgba(100,135,165,0.3)' }} />
+        </div>
+      )}
+
+      {special.map(c => <CommitteeCard key={c.committeeName} c={c} />)}
+    </div>
+  );
+}
+

@@ -97,6 +97,12 @@ export interface AttendanceSummaryResponse {
     absentCount: number;
     leaveCount: number;
     officialTripCount: number;
+    recentRecords: {
+      sessionNo: number;
+      meetingNo: number;
+      meetingDt: string;
+      status: 'PRESENT' | 'ABSENT' | 'LEAVE' | 'OFFICIAL_TRIP';
+    }[];
   }[];
 }
 
