@@ -24,6 +24,7 @@ public class BatchApplicationService implements BatchTriggerUseCase {
     private final Job collectVotesJob;
     private final Job collectHistoricalProfilesJob;
     private final Job collectPlenaryAttendanceJob;
+    private final Job collectCommitteeAttendanceJob;
     private final VotePort votePort;
 
     public BatchApplicationService(JobLauncher jobLauncher,
@@ -32,6 +33,7 @@ public class BatchApplicationService implements BatchTriggerUseCase {
                                    @Qualifier("collectVotesJob") Job collectVotesJob,
                                    @Qualifier("collectHistoricalProfilesJob") Job collectHistoricalProfilesJob,
                                    @Qualifier("collectPlenaryAttendanceJob") Job collectPlenaryAttendanceJob,
+                                   @Qualifier("collectCommitteeAttendanceJob") Job collectCommitteeAttendanceJob,
                                    VotePort votePort) {
         this.jobLauncher = jobLauncher;
         this.collectMembersJob = collectMembersJob;
@@ -39,6 +41,7 @@ public class BatchApplicationService implements BatchTriggerUseCase {
         this.collectVotesJob = collectVotesJob;
         this.collectHistoricalProfilesJob = collectHistoricalProfilesJob;
         this.collectPlenaryAttendanceJob = collectPlenaryAttendanceJob;
+        this.collectCommitteeAttendanceJob = collectCommitteeAttendanceJob;
         this.votePort = votePort;
     }
 
@@ -84,6 +87,11 @@ public class BatchApplicationService implements BatchTriggerUseCase {
     @Override
     public BatchResult runPlenaryAttendance() {
         return run(collectPlenaryAttendanceJob, "collectPlenaryAttendanceJob");
+    }
+
+    @Override
+    public BatchResult runCommitteeAttendance() {
+        return run(collectCommitteeAttendanceJob, "collectCommitteeAttendanceJob");
     }
 
     @Override

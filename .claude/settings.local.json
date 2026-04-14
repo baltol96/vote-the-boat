@@ -61,7 +61,20 @@
       "Bash(python3:*)",
       "Bash(where python3:*)",
       "Bash(where python:*)",
-      "Bash(./gradlew --version)"
+      "Bash(./gradlew --version)",
+      "Bash(where pdftotext:*)",
+      "Bash(where mutool:*)",
+      "Bash(where pdftk:*)",
+      "Bash(pdftotext -layout \"C:/Users/User/.claude/projects/D--workspaces-vote-the-boat/e0dcac3d-edb7-4509-bd69-9ffdc02fab48/tool-results/webfetch-1776097146499-9rup0n.bin\" -)",
+      "Bash(pdftotext -layout -enc UTF-8 \"C:/Users/User/.claude/projects/D--workspaces-vote-the-boat/e0dcac3d-edb7-4509-bd69-9ffdc02fab48/tool-results/webfetch-1776097146499-9rup0n.bin\" -)",
+      "Bash(pdftotext -htmlmeta \"C:/Users/User/.claude/projects/D--workspaces-vote-the-boat/e0dcac3d-edb7-4509-bd69-9ffdc02fab48/tool-results/webfetch-1776097146499-9rup0n.bin\" -)",
+      "Bash(pdftotext -layout -f 1 -l 2 \"C:/Users/User/.claude/projects/D--workspaces-vote-the-boat/e0dcac3d-edb7-4509-bd69-9ffdc02fab48/tool-results/webfetch-1776097146499-9rup0n.bin\" -)",
+      "Bash(find /d/workspaces/vote-the-boat/backend/src/main/java/com/assembly -type f -name \"*.java\" -exec wc -l {} +)",
+      "Bash(ls:*)",
+      "Bash(npx next:*)",
+      "Bash(python -m json.tool)",
+      "Bash(tasklist:*)",
+      "Bash(wait)"
     ]
   }
 }

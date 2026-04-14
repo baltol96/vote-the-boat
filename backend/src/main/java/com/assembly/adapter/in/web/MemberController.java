@@ -1,5 +1,7 @@
 package com.assembly.adapter.in.web;
 
+import com.assembly.application.attendance.AttendanceSummaryResult;
+import com.assembly.application.attendance.port.in.GetAttendanceUseCase;
 import com.assembly.application.bill.BillResult;
 import com.assembly.application.bill.port.in.GetBillUseCase;
 import com.assembly.application.common.PageResult;
@@ -26,6 +28,7 @@ public class MemberController {
     private final SearchMemberUseCase searchMemberUseCase;
     private final GetBillUseCase getBillUseCase;
     private final GetVoteUseCase getVoteUseCase;
+    private final GetAttendanceUseCase getAttendanceUseCase;
 
     @GetMapping("/{monaCode}")
     public ResponseEntity<MemberResult> getMember(@PathVariable String monaCode) {
@@ -42,13 +45,19 @@ public class MemberController {
     @GetMapping("/{monaCode}/votes")
     public ResponseEntity<PageResult<VoteRecord>> getVotes(
             @PathVariable String monaCode,
+            @RequestParam(required = false) String result,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(getVoteUseCase.getVotes(monaCode, pageable));
+        return ResponseEntity.ok(getVoteUseCase.getVotes(monaCode, result, pageable));
     }
 
     @GetMapping("/{monaCode}/attendance")
     public ResponseEntity<AttendanceResult> getAttendance(@PathVariable String monaCode) {
         return ResponseEntity.ok(getVoteUseCase.getAttendance(monaCode));
+    }
+
+    @GetMapping("/{monaCode}/attendance-summary")
+    public ResponseEntity<AttendanceSummaryResult> getAttendanceSummary(@PathVariable String monaCode) {
+        return ResponseEntity.ok(getAttendanceUseCase.getAttendanceSummary(monaCode));
     }
 
     @GetMapping("/search")

@@ -11,5 +11,6 @@ public interface BatchTriggerUseCase {
     BatchResult runVotesReload();  // votes 테이블 초기화 후 전체 재수집
     BatchResult runHistoricalProfiles();
     BatchResult runPlenaryAttendance();
+    BatchResult runCommitteeAttendance();
     Map<String, BatchResult> runAll();
 }

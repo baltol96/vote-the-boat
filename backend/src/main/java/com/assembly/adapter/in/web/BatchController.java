@@ -47,6 +47,11 @@ public class BatchController {
         return ResponseEntity.ok(batchTriggerUseCase.runPlenaryAttendance());
     }
 
+    @PostMapping("/committee-attendance")
+    public ResponseEntity<BatchResult> runCommitteeAttendanceJob() {
+        return ResponseEntity.ok(batchTriggerUseCase.runCommitteeAttendance());
+    }
+
     @PostMapping("/all")
     public ResponseEntity<Map<String, BatchResult>> runAllJobs() {
         return ResponseEntity.ok(batchTriggerUseCase.runAll());
