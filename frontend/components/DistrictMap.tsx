@@ -68,7 +68,7 @@ function MapSelect({ value, onChange, placeholder, options, disabled, loading }:
           style={{
             opacity: disabled ? 0.3 : 0.6,
             transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: 'transform 0.18s ease',
+            transition: 'transform 200ms ease',
             flexShrink: 0,
           }}
         >

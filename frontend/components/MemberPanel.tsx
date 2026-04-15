@@ -146,7 +146,7 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={clsx(
-              'px-3 py-1.5 rounded-full text-xs font-jakarta font-medium transition-all duration-300 whitespace-nowrap',
+              'px-3 py-1.5 rounded-full text-xs font-jakarta font-medium transition-all duration-[350ms] whitespace-nowrap',
               activeTab === tab
                 ? 'bg-primary-container/80 text-primary'
                 : 'text-on-surface/40 hover:text-on-surface/70',

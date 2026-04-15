@@ -122,7 +122,7 @@ export default function Home() {
         <meta property="og:description" content="내가 뽑은 의원은 무엇을 하고 있는가?" />
       </Head>
 
-      <div className="flex flex-col h-screen font-inter overflow-hidden"
+      <div className="flex flex-col h-screen font-jakarta overflow-hidden"
            style={{ background: 'var(--color-surface)', color: 'var(--color-on-surface)' }}>
 
         {/* ── 헤더 ── */}
@@ -371,7 +371,7 @@ export default function Home() {
             className="member-panel shrink-0 overflow-hidden flex flex-col"
             style={{
               width: isPanelOpen && selectedMonaCd ? '440px' : '0px',
-              transition: 'width 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'width 350ms cubic-bezier(0.4, 0, 0.2, 1)',
               borderLeft: `1px solid ${isPanelOpen ? SEP : 'transparent'}`,
               background: 'var(--color-surface-low)',
             }}

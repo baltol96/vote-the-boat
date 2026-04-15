@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -30,13 +30,35 @@
   --color-map-cliff-1:        rgba(60, 45, 20, 0.95);
   --color-map-cliff-2:        rgba(40, 30, 12, 0.85);
   --color-map-cliff-3:        rgba(25, 18, 8, 0.70);
+
+  /* Semantic */
+  --color-on-surface-muted:   #5a6a7e;
+  --color-success:            #16a34a;
+  --color-warning:            #d97706;
+  --color-error:              #dc2626;
+  --color-info:               #2563eb;
+
+  /* Motion */
+  --duration-micro:           100ms;
+  --duration-short:           200ms;
+  --duration-medium:          350ms;
+  --ease-enter:               cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit:                cubic-bezier(0.4, 0, 1, 1);
+  --ease-move:                cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Border Radius */
+  --radius-sm:                4px;
+  --radius-md:                8px;
+  --radius-lg:                12px;
+  --radius-xl:                16px;
+  --radius-full:              9999px;
 }
 
 /* ── 기본 전역 ── */
 @layer base {
   html, body {
     background-color: var(--color-surface);
-    font-family: 'Inter', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     color: var(--color-on-surface);
   }
 
@@ -44,7 +66,7 @@
     @apply w-full h-full;
     background: var(--color-map-bg) !important;
     outline: none !important;
-    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color var(--duration-medium) var(--ease-move);
   }
 
   .map-ocean-wrap {
@@ -77,7 +99,7 @@
   line-height: 28px !important;
   width: 28px !important;
   height: 28px !important;
-  transition: background-color 0.2s ease !important;
+  transition: background-color var(--duration-short) var(--ease-enter) !important;
 }
 
 .leaflet-control-zoom a:hover {
@@ -99,7 +121,7 @@
   filter:
     drop-shadow(3px 6px 3px var(--color-map-cliff-1))
     drop-shadow(0px 20px 28px rgba(0, 0, 0, 0.45));
-  transition: filter 0.15s ease;
+  transition: filter var(--duration-micro) ease;
 }
 
 /* 줌·이동 중 filter 제거 → GPU transform만 사용해 프레임 드롭 방지 */
@@ -110,7 +132,7 @@
 
 /* 새 레이어 등장 시 부드러운 페이드인 */
 .leaflet-overlay-pane svg {
-  transition: opacity 0.18s ease;
+  transition: opacity var(--duration-short) ease;
 }
 .leaflet-overlay-pane.map-pane-paused svg {
   transition: none;
@@ -136,7 +158,7 @@
   padding: 5px 10px !important;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1) !important;
   white-space: nowrap !important;
-  transition: background 0.3s ease, color 0.3s ease !important;
+  transition: background var(--duration-medium) ease, color var(--duration-medium) ease !important;
 }
 
 .district-tooltip::before {
@@ -160,7 +182,7 @@
 
 /* ── 검색 드롭다운 결과 항목 hover ── */
 .search-result-item {
-  transition: background-color 0.15s ease;
+  transition: background-color var(--duration-micro) ease;
 }
 .search-result-item:hover {
   background: color-mix(in srgb, var(--color-primary-container) 18%, transparent);
@@ -175,7 +197,7 @@
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
 .toast-in {
-  animation: toast-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: toast-in var(--duration-short) cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 /* ── 사이드 패널 overflow 보정 ── */
