@@ -42,18 +42,18 @@
 
   .leaflet-container {
     @apply w-full h-full;
-    background: var(--color-map-bg) !important;
-    outline: none !important;
-    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .map-ocean-wrap {
     background:
       radial-gradient(ellipse at 55% 45%,
         var(--color-map-ocean-center) 0%,
         var(--color-map-bg) 55%,
         var(--color-map-ocean-edge) 100%
       ) !important;
+    outline: none !important;
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .map-ocean-wrap {
+    background: var(--color-map-bg);
   }
 
   .leaflet-container:focus,

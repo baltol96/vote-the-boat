@@ -137,6 +137,7 @@ interface DistrictMapProps {
   selectedSggCode?: string;
   selectedPartyColor?: string;
   onViewModeChange?: (mode: MapViewMode, selectedSido?: string) => void;
+  isPanelOpen?: boolean;
 }
 
 function getColors() {
@@ -157,6 +158,7 @@ export default function DistrictMap({
   selectedSggCode,
   selectedPartyColor,
   onViewModeChange,
+  isPanelOpen,
 }: DistrictMapProps) {
   const mapContainerRef   = useRef<HTMLDivElement>(null);
   const mapRef            = useRef<LeafletMap | null>(null);
@@ -185,6 +187,32 @@ export default function DistrictMap({
 
   useEffect(() => { selectedRef.current = selectedSggCode; }, [selectedSggCode]);
   useEffect(() => { selectedPartyColorRef.current = selectedPartyColor; }, [selectedPartyColor]);
+
+  // 패널 열림/닫힘 시 지도를 패널 제외 영역 중앙으로 이동
+  const isPanelOpenRef = useRef(isPanelOpen ?? false);
+  useEffect(() => { isPanelOpenRef.current = isPanelOpen ?? false; }, [isPanelOpen]);
+
+  const prevPanelOpenRef = useRef(false);
+  useEffect(() => {
+    const wasOpen = prevPanelOpenRef.current;
+    const isOpen = isPanelOpen ?? false;
+    prevPanelOpenRef.current = isOpen;
+
+    const map = mapRef.current;
+    if (!map || isOpen === wasOpen || window.innerWidth < 768) return;
+
+    // sido 뷰 전환으로 패널이 닫히는 경우: showSidoView의 fitBounds가 위치를 처리하므로
+    // panBy를 실행하면 두 애니메이션이 충돌해 지도가 튕김 → panBy만 생략하고 invalidateSize는 유지
+    if (!isOpen && viewModeRef.current === 'sido') {
+      setTimeout(() => map.invalidateSize({ pan: false }), 320);
+      return;
+    }
+
+    const offset = 440 / 2;
+    map.panBy(isOpen ? [offset, 0] : [-offset, 0], { animate: true, duration: 0.28 });
+    // pan: false — invalidateSize가 팬을 되돌리지 않도록
+    setTimeout(() => map.invalidateSize({ pan: false }), 320);
+  }, [isPanelOpen]);
 
   // ── 공통 스타일 헬퍼 ──────────────────────────────────────────
   const getIdleStyle = (isSido = false) => {
@@ -309,7 +337,13 @@ export default function DistrictMap({
     const map = mapRef.current;
     if (!L || !map) return;
 
-    if (bounds) map.fitBounds(bounds, { padding: [32, 48], maxZoom: 11, animate: true });
+    if (bounds) {
+      const panelOpen = isPanelOpenRef.current && window.innerWidth >= 768;
+      const fitOpts = panelOpen
+        ? { paddingTopLeft: [48, 32] as [number, number], paddingBottomRight: [488, 32] as [number, number], maxZoom: 11, animate: true }
+        : { padding: [32, 48] as [number, number], maxZoom: 11, animate: true };
+      map.fitBounds(bounds, fitOpts);
+    }
 
     // GeoJSON fetch (캐시 우선)
     const cachedGeoJson = distCacheRef.current.get(sidoCode);
@@ -453,14 +487,15 @@ export default function DistrictMap({
         if (cancelled || !mapContainerRef.current) return;
         LRef.current = L;
 
-        const koreaBounds = L.latLngBounds([32.8, 124.5], [38.8, 132.0]);
+        const koreaBounds = L.latLngBounds([31.5, 123.5], [39.5, 134.0]);
         const map = L.map(mapContainerRef.current, {
           center: [36.3, 127.8], zoom: 7,
-          zoomControl: true,
+          zoomControl: false,
           maxBounds: koreaBounds, maxBoundsViscosity: 1.0,
           minZoom: 6, maxZoom: 13,
           boxZoom: false, zoomAnimationThreshold: 10,
         });
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
         mapRef.current = map;
 
         const setFilterPaused = (p: boolean) => {
@@ -548,6 +583,7 @@ export default function DistrictMap({
       }
     } else {
       prevSelectedRef.current = null;
+      setSelectDistrict('');
     }
   }, [selectedSggCode]);
 

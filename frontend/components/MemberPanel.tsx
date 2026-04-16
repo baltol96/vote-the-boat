@@ -60,6 +60,7 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
   useEffect(() => {
     setLoading(true);
     setError(null);
+    setActiveTab('info');
     Promise.allSettled([
       memberApi.getMember(monaCd),
       memberApi.getAttendance(monaCd),
@@ -134,7 +135,7 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
             {member.party}
           </span>
           <span className="font-jakarta text-xs text-on-surface/50">
-            {member.electionType} · {member.termCount}선
+            {member.electionType}{member.termCount ? ` · ${member.termCount}선` : ''}
           </span>
         </div>
       </div>
@@ -190,7 +191,7 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
             ]
               .filter(({ value }) => value)
               .map(({ label, value }) => (
-                <div key={label} className="rounded-xl p-4" style={{ background: '#dde4ee', border: SEP }}>
+                <div key={label} className="rounded-xl p-4 bg-surface-high" style={{ border: SEP }}>
                   <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-2">{label}</p>
                   <p className="font-jakarta text-xs text-on-surface/80 leading-relaxed whitespace-pre-line">{value}</p>
                 </div>
@@ -245,7 +246,7 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
                           onClick={() => { setBillRoleTab(role); setBillFilter(null); }}
                           className="flex-1 py-2 font-jakarta text-xs font-medium transition-all"
                           style={{
-                            background: isActive ? 'rgba(13,110,105,0.1)' : '#dde4ee',
+                            background: isActive ? 'rgba(13,110,105,0.1)' : 'var(--color-surface-high)',
                             color: isActive ? '#0d6e69' : 'rgba(26,37,53,0.45)',
                             borderRight: role !== 'co' ? SEP : 'none',
                           }}
@@ -283,7 +284,7 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
                             </Pie>
                             <Tooltip
                               formatter={(v: number, name: string) => [`${v}건`, name]}
-                              contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 11 }}
+                              contentStyle={{ background: 'var(--color-surface-high)', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 11 }}
                             />
                           </PieChart>
                         </ResponsiveContainer>
@@ -321,7 +322,7 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
               .filter((bill) => billFilter === null || bill.status === billFilter)
               .filter((bill) => billRoleTab === 'all' || (billRoleTab === 'main' ? bill.proposerRole === '대표발의' : bill.proposerRole === '공동발의'))
               .map((bill) => (
-              <div key={bill.billNo} className="rounded-xl p-4" style={{ background: '#dde4ee', border: SEP }}>
+              <div key={bill.billNo} className="rounded-xl p-4 bg-surface-high" style={{ border: SEP }}>
                 <p className="font-jakarta text-xs font-medium text-on-surface/90 line-clamp-2 leading-relaxed">
                   {bill.billName}
                 </p>
@@ -440,7 +441,7 @@ function VoteTab({ monaCd, attendanceSummary }: { monaCd: string; attendanceSumm
               onClick={() => setResultFilter(opt.key)}
               className="flex-1 py-2 font-jakarta text-xs font-medium transition-all"
               style={{
-                background: isActive ? `${color}18` : '#dde4ee',
+                background: isActive ? `${color}18` : 'var(--color-surface-high)',
                 color: isActive ? color : 'rgba(26,37,53,0.45)',
                 borderRight: idx < filterOptions.length - 1 ? SEP : 'none',
               }}
@@ -478,7 +479,7 @@ function VoteTab({ monaCd, attendanceSummary }: { monaCd: string; attendanceSumm
                   </Pie>
                   <Tooltip
                     formatter={(v: number, name: string) => name === '참여율' ? [`${v.toFixed(1)}%`, name] : null as any}
-                    contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 12 }}
+                    contentStyle={{ background: 'var(--color-surface-high)', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 12 }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -510,7 +511,7 @@ function VoteTab({ monaCd, attendanceSummary }: { monaCd: string; attendanceSumm
                   </Pie>
                   <Tooltip
                     formatter={(v: number, name: string) => [`${v}건`, name]}
-                    contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 11 }}
+                    contentStyle={{ background: 'var(--color-surface-high)', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 11 }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -552,8 +553,8 @@ function VoteTab({ monaCd, attendanceSummary }: { monaCd: string; attendanceSumm
       {filtered.map((vote) => {
         const color = VOTE_RESULT_COLOR[vote.result] ?? '#94a3b8';
         return (
-          <div key={`${vote.billNo}-${vote.voteDt}`} className="rounded-xl p-4"
-               style={{ background: '#dde4ee', border: '1px solid rgba(100,135,165,0.25)' }}>
+          <div key={`${vote.billNo}-${vote.voteDt}`} className="rounded-xl p-4 bg-surface-high"
+               style={{ border: '1px solid rgba(100,135,165,0.25)' }}>
             {vote.billUrl ? (
               <a href={vote.billUrl} target="_blank" rel="noopener noreferrer"
                  className="font-jakarta text-xs font-medium text-on-surface/90 line-clamp-2 leading-relaxed hover:underline decoration-on-surface/30">
@@ -632,8 +633,8 @@ function HistoryTab({ sggCode }: { sggCode?: string }) {
         return (
           <div
             key={`${rep.termNumber}-${rep.monaCd}`}
-            className="flex items-center gap-3 rounded-xl p-3"
-            style={{ background: '#dde4ee', border: '1px solid rgba(100,135,165,0.25)' }}
+            className="flex items-center gap-3 rounded-xl p-3 bg-surface-high"
+            style={{ border: '1px solid rgba(100,135,165,0.25)' }}
           >
             <div
               className="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-manrope font-bold text-xs"
@@ -736,7 +737,7 @@ function AttendanceTab({ monaCd }: { monaCd: string }) {
             onClick={() => setSubTab(key)}
             className="flex-1 py-2 font-jakarta text-xs font-medium transition-all"
             style={{
-              background: subTab === key ? 'rgba(13,110,105,0.1)' : '#dde4ee',
+              background: subTab === key ? 'rgba(13,110,105,0.1)' : 'var(--color-surface-high)',
               color: subTab === key ? '#0d6e69' : 'rgba(26,37,53,0.45)',
               borderRight: idx === 0 ? SEP : 'none',
             }}
@@ -800,7 +801,7 @@ function PlenaryAttendanceView({ plenary }: { plenary: AttendanceSummaryResponse
                   </Pie>
                   <Tooltip
                     formatter={(v: number, name: string) => name === '출석' ? [`${v.toFixed(1)}%`, name] : null as any}
-                    contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 12 }}
+                    contentStyle={{ background: 'var(--color-surface-high)', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 12 }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -835,7 +836,7 @@ function PlenaryAttendanceView({ plenary }: { plenary: AttendanceSummaryResponse
                   </Pie>
                   <Tooltip
                     formatter={(v: number, name: string) => [`${v}회`, name]}
-                    contentStyle={{ background: '#dde4ee', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 11 }}
+                    contentStyle={{ background: 'var(--color-surface-high)', border: 'none', borderRadius: 8, color: '#1a2535', fontSize: 11 }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -865,7 +866,7 @@ function PlenaryAttendanceView({ plenary }: { plenary: AttendanceSummaryResponse
         }, {});
         const sessions = Object.keys(grouped).map(Number).sort((a, b) => b - a);
         return (
-          <div className="rounded-xl p-4" style={{ background: '#dde4ee', border: SEP }}>
+          <div className="rounded-xl p-4 bg-surface-high" style={{ border: SEP }}>
             <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-3">최근 본회의 출결</p>
             <div className="flex flex-col gap-3">
               {sessions.map((sessionNo) => (
@@ -914,7 +915,7 @@ function CommitteeCard({ c }: { c: AttendanceSummaryResponse['committees'][numbe
   const hasRecords = sessions.length > 0;
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: '#dde4ee', border: SEP }}>
+    <div className="rounded-xl overflow-hidden bg-surface-high" style={{ border: SEP }}>
       {/* 클릭 가능한 요약 영역 */}
       <button
         className="w-full text-left p-3"
