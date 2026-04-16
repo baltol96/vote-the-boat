@@ -187,3 +187,23 @@ GET /api/v1/elections/{electionId}/compare     # 후보자 비교
 - RestClient 사용 (WebClient/RestTemplate 사용 금지)
 - 캐시 대상: 의원 프로필 (`@Cacheable`), 선거구-의원 매핑 테이블, 지자체장·후보자 캐싱 전략 신규 설계 필요
 - Flyway로 DB 스키마 마이그레이션 관리
+
+## Skill routing
+
+When the user's request matches an available skill, ALWAYS invoke it using the Skill
+tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
+The skill has specialized workflows that produce better results than ad-hoc answers.
+
+Key routing rules:
+- Product ideas, "is this worth building", brainstorming → invoke office-hours
+- Bugs, errors, "why is this broken", 500 errors → invoke investigate
+- Ship, deploy, push, create PR → invoke ship
+- QA, test the site, find bugs → invoke qa
+- Code review, check my diff → invoke review
+- Update docs after shipping → invoke document-release
+- Weekly retro → invoke retro
+- Design system, brand → invoke design-consultation
+- Visual audit, design polish → invoke design-review
+- Architecture review → invoke plan-eng-review
+- Save progress, checkpoint, resume → invoke checkpoint
+- Code quality, health check → invoke health
