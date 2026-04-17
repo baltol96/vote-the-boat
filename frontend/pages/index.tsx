@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useReducer, useState, useRef } from 'react';
 import Head from 'next/head';
 import MemberPanel from '@/components/MemberPanel';
 import { districtApi, memberApi, MemberResponse } from '@/lib/api';
@@ -10,6 +10,43 @@ const DistrictMap = dynamic(() => import('@/components/DistrictMap'), { ssr: fal
 
 const SEP = 'rgba(100,135,165,0.4)';
 
+// ── 패널 상태 머신 ────────────────────────────────────────────────
+type PanelState =
+  | { status: 'idle' }
+  | { status: 'loading'; sggCode: string }
+  | { status: 'open';    sggCode: string; monaCd: string; partyColor?: string }
+  | { status: 'error';   sggCode: string; message: string };
+
+type PanelAction =
+  | { type: 'DISTRICT_SELECT'; sggCode: string }
+  | { type: 'MEMBER_LOADED';   monaCd: string; partyColor: string }
+  | { type: 'LOAD_ERROR';      message: string }
+  | { type: 'CLOSE' }
+  | { type: 'SEARCH_SELECT';   monaCd: string }
+  | { type: 'MAP_RESET' };
+
+function panelReducer(state: PanelState, action: PanelAction): PanelState {
+  switch (action.type) {
+    case 'DISTRICT_SELECT':
+      return { status: 'loading', sggCode: action.sggCode };
+    case 'MEMBER_LOADED':
+      if (state.status !== 'loading') return state;
+      return { status: 'open', sggCode: state.sggCode, monaCd: action.monaCd, partyColor: action.partyColor };
+    case 'LOAD_ERROR':
+      if (state.status !== 'loading') return state;
+      return { status: 'error', sggCode: state.sggCode, message: action.message };
+    case 'CLOSE':
+      return { status: 'idle' };
+    case 'SEARCH_SELECT':
+      return { status: 'open', sggCode: '', monaCd: action.monaCd };
+    case 'MAP_RESET':
+      return { status: 'idle' };
+    default:
+      return state;
+  }
+}
+
+// ── 아이콘 ────────────────────────────────────────────────────────
 function SearchIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -36,14 +73,13 @@ function PinIcon() {
 }
 
 export default function Home() {
-  const [selectedSggCode, setSelectedSggCode] = useState<string | undefined>();
-  const [selectedMonaCd, setSelectedMonaCd] = useState<string | undefined>();
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [loadingMember, setLoadingMember] = useState(false);
-  const [selectedPartyColor, setSelectedPartyColor] = useState<string | undefined>();
-  const [toast, setToast] = useState<string | null>(null);
+  // ── 패널 상태 (useReducer) ────────────────────────────────────
+  const [panel, dispatch] = useReducer(panelReducer, { status: 'idle' });
+
+  // ── 독립 상태 ─────────────────────────────────────────────────
   const [mapViewMode, setMapViewMode] = useState<MapViewMode>('sido');
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile]       = useState(false);
+  const [toast, setToast]             = useState<string | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
@@ -53,14 +89,14 @@ export default function Home() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // 바텀 시트 드래그
-  const SNAP_EXPANDED = 90;
-  const SNAP_DEFAULT = 90;
+  // ── 바텀 시트 드래그 ─────────────────────────────────────────
+  const SNAP_EXPANDED  = 90;
+  const SNAP_DEFAULT   = 90;
   const SNAP_COLLAPSED = 40;
   const [sheetHeight, setSheetHeight] = useState(SNAP_DEFAULT);
-  const dragStartY = useRef<number | null>(null);
+  const dragStartY      = useRef<number | null>(null);
   const dragStartHeight = useRef<number>(SNAP_DEFAULT);
-  const isDragging = useRef(false);
+  const isDragging      = useRef(false);
 
   const handleDragStart = (e: React.TouchEvent) => {
     dragStartY.current = e.touches[0].clientY;
@@ -84,15 +120,14 @@ export default function Home() {
     });
   };
 
-  // 검색 상태
-  const [searchQuery, setSearchQuery] = useState('');
+  // ── 검색 상태 ────────────────────────────────────────────────
+  const [searchQuery,   setSearchQuery]   = useState('');
   const [searchResults, setSearchResults] = useState<MemberResponse[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const searchRef      = useRef<HTMLDivElement>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 검색 디바운스
   useEffect(() => {
     const q = searchQuery.trim();
     if (!q) { setSearchResults([]); return; }
@@ -110,7 +145,6 @@ export default function Home() {
     }, 300);
   }, [searchQuery]);
 
-  // 드롭다운 외부 클릭 닫기
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
@@ -121,36 +155,43 @@ export default function Home() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // 토스트
+  // ── 토스트 ────────────────────────────────────────────────────
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   };
 
+  // ── 이벤트 핸들러 ────────────────────────────────────────────
   const handleDistrictSelect = async (sggCode: string) => {
-    setSelectedSggCode(sggCode);
-    setSelectedPartyColor(undefined);
+    dispatch({ type: 'DISTRICT_SELECT', sggCode });
     setSheetHeight(SNAP_DEFAULT);
-    setLoadingMember(true);
     try {
       const member = await districtApi.getMemberBySggCode(sggCode);
-      setSelectedMonaCd(member.monaCd);
-      setSelectedPartyColor(getPartyColor(member.party));
-      setIsPanelOpen(true);
+      dispatch({ type: 'MEMBER_LOADED', monaCd: member.monaCd, partyColor: getPartyColor(member.party) });
     } catch {
+      dispatch({ type: 'LOAD_ERROR', message: '해당 선거구 의원 정보를 찾을 수 없습니다.' });
       showToast('해당 선거구 의원 정보를 찾을 수 없습니다.');
-    } finally {
-      setLoadingMember(false);
     }
   };
 
   const handleSearchSelect = (member: MemberResponse) => {
-    setSelectedMonaCd(member.monaCd);
-    setIsPanelOpen(true);
+    dispatch({ type: 'SEARCH_SELECT', monaCd: member.monaCd });
     setSearchQuery('');
     setSearchFocused(false);
   };
 
+  const handleClose = () => dispatch({ type: 'CLOSE' });
+
+  // ── 파생 값 ──────────────────────────────────────────────────
+  const isPanelOpen     = panel.status === 'open';
+  const isLoadingMember = panel.status === 'loading';
+  const isPanelError    = panel.status === 'error';
+  // loading/error 중에도 패널을 440px 유지해 지도 컨테이너가 흔들리지 않도록 함
+  // error 제외 시: isPanelVisible이 true→false로 바뀌며 panBy 역방향이 트리거됨
+  const isPanelVisible  = panel.status === 'open' || panel.status === 'loading' || panel.status === 'error';
+  const selectedSggCode = panel.status !== 'idle' ? panel.sggCode || undefined : undefined;
+  const selectedMonaCd  = panel.status === 'open' ? panel.monaCd : undefined;
+  const selectedPartyColor = panel.status === 'open' ? panel.partyColor : undefined;
   const showDropdown = searchFocused && searchQuery.trim().length > 0;
 
   return (
@@ -202,7 +243,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 구분선 */}
           <div className="h-5 w-px shrink-0" style={{ background: SEP }} />
 
           {/* 검색바 */}
@@ -211,9 +251,7 @@ export default function Home() {
               className="flex items-center gap-2 px-3 h-8 rounded-lg transition-all duration-200"
               style={{
                 background: 'rgba(220,228,238,0.8)',
-                border: `1px solid ${
-                  searchFocused ? 'rgba(13,110,105,0.4)' : 'rgba(100,135,165,0.4)'
-                }`,
+                border: `1px solid ${searchFocused ? 'rgba(13,110,105,0.4)' : 'rgba(100,135,165,0.4)'}`,
               }}
             >
               <span style={{ color: 'var(--color-primary)', opacity: 0.7, flexShrink: 0 }}>
@@ -245,7 +283,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* 검색 드롭다운 */}
             {showDropdown && (
               <div
                 className="absolute top-full left-0 right-0 mt-1.5 rounded-xl overflow-hidden z-50"
@@ -345,23 +382,16 @@ export default function Home() {
               selectedPartyColor={selectedPartyColor}
               onViewModeChange={(mode) => {
                 setMapViewMode(mode);
-                if (mode === 'sido') {
-                  setIsPanelOpen(false);
-                  setSelectedPartyColor(undefined);
-                  setSelectedSggCode(undefined);
-                }
+                if (mode === 'sido') dispatch({ type: 'MAP_RESET' });
               }}
-              isPanelOpen={isPanelOpen}
+              isPanelOpen={isPanelVisible}
             />
 
             {/* 지도 로딩 오버레이 */}
-            {loadingMember && (
+            {isLoadingMember && (
               <div
                 className="absolute inset-0 z-20 flex items-center justify-center"
-                style={{
-                  background: 'rgba(244,247,251,0.55)',
-                  backdropFilter: 'blur(4px)',
-                }}
+                style={{ background: 'rgba(244,247,251,0.55)', backdropFilter: 'blur(4px)' }}
               >
                 <div className="flex flex-col items-center gap-3">
                   <div
@@ -375,8 +405,8 @@ export default function Home() {
               </div>
             )}
 
-            {/* 하단 중앙 힌트 */}
-            {!isPanelOpen && (
+            {/* 하단 힌트 */}
+            {!isPanelVisible && (
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1001] pointer-events-none">
                 <div
                   className="flex items-center gap-2 px-4 py-2 rounded-full font-jakarta font-medium whitespace-nowrap"
@@ -397,7 +427,6 @@ export default function Home() {
                 </div>
               </div>
             )}
-
           </div>
 
           {/* ── 사이드 패널 (데스크톱) ── */}
@@ -405,19 +434,39 @@ export default function Home() {
             <aside
               className="member-panel shrink-0 overflow-hidden flex flex-col"
               style={{
-                width: isPanelOpen && selectedMonaCd ? '440px' : '0px',
+                width: isPanelVisible ? '440px' : '0px',
                 transition: 'width 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
-                borderLeft: `1px solid ${isPanelOpen ? SEP : 'transparent'}`,
+                borderLeft: `1px solid ${isPanelVisible ? SEP : 'transparent'}`,
                 background: 'var(--color-surface-low)',
               }}
             >
-              {isPanelOpen && selectedMonaCd && (
+              {isPanelOpen && selectedMonaCd ? (
                 <MemberPanel
                   monaCd={selectedMonaCd}
                   sggCode={selectedSggCode}
-                  onClose={() => { setIsPanelOpen(false); setSelectedPartyColor(undefined); setSelectedSggCode(undefined); }}
+                  onClose={handleClose}
                 />
-              )}
+              ) : isLoadingMember ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <div
+                    className="w-8 h-8 rounded-full border-2 animate-spin"
+                    style={{ borderColor: 'rgba(13,110,105,0.15)', borderTopColor: 'var(--color-primary)' }}
+                  />
+                </div>
+              ) : isPanelError ? (
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6">
+                  <p className="font-jakarta text-sm text-center" style={{ color: 'var(--color-on-surface-variant)' }}>
+                    {panel.status === 'error' ? panel.message : '의원 정보를 불러올 수 없습니다.'}
+                  </p>
+                  <button
+                    onClick={handleClose}
+                    className="font-jakarta text-xs px-3 py-1.5 rounded-lg transition-colors"
+                    style={{ background: 'rgba(13,110,105,0.1)', color: 'var(--color-primary)' }}
+                  >
+                    닫기
+                  </button>
+                </div>
+              ) : null}
             </aside>
           )}
         </div>
@@ -425,15 +474,13 @@ export default function Home() {
         {/* ── 바텀 시트 (모바일) ── */}
         {isMobile && selectedMonaCd && (
           <>
-            {/* 딤 오버레이 */}
             {isPanelOpen && (
               <div
                 className="fixed inset-0 z-[1500]"
                 style={{ background: 'rgba(26,37,53,0.35)', backdropFilter: 'blur(2px)' }}
-                onClick={() => { setIsPanelOpen(false); setSelectedPartyColor(undefined); }}
+                onClick={handleClose}
               />
             )}
-            {/* 바텀 시트 */}
             <div
               className="fixed inset-x-0 bottom-0 z-[1600] flex flex-col overflow-hidden"
               style={{
@@ -448,7 +495,6 @@ export default function Home() {
                   : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
-              {/* 드래그 핸들 */}
               <div
                 className="flex justify-center items-center shrink-0 cursor-grab active:cursor-grabbing touch-none"
                 style={{ paddingTop: '14px', paddingBottom: '14px' }}
@@ -461,7 +507,7 @@ export default function Home() {
               <MemberPanel
                 monaCd={selectedMonaCd}
                 sggCode={selectedSggCode}
-                onClose={() => { setIsPanelOpen(false); setSelectedPartyColor(undefined); setSelectedSggCode(undefined); }}
+                onClose={handleClose}
               />
             </div>
           </>

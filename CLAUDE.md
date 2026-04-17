@@ -197,6 +197,15 @@ GET /api/v1/elections/{electionId}/compare     # 후보자 비교
 - 캐시 대상: 의원 프로필 (`@Cacheable`), 선거구-의원 매핑 테이블, 지자체장·후보자 캐싱 전략 신규 설계 필요
 - Flyway로 DB 스키마 마이그레이션 관리
 
+## 도구 사용 규칙
+- 파일 목록 조회: Glob 사용 (Bash `ls`/`find` 금지)
+- 파일 내용 조회: Read 사용 (Bash `cat`/`head`/`tail` 금지)
+- 파일 내용 검색: Grep 사용 (Bash `grep`/`rg` 금지)
+- Bash는 빌드·테스트·git·패키지 매니저 등 셸 전용 명령에만 사용
+- 3개 이상 파일을 읽어야 하는 탐색성 질문은 Agent에 위임한다 (메인 컨텍스트에 결과 누적 방지)
+- Edit 성공 후 재Read 금지 — Edit가 실패하면 에러를 반환하므로 확인 불필요
+- 파일을 통째로 Read하지 말 것 — Grep으로 위치 파악 후 `offset`/`limit`로 필요 영역만 Read
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill
