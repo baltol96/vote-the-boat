@@ -25,7 +25,7 @@
 ### 주간 계획
 | 기간 | 작업 |
 |---|---|
-| Week 1 (4/14-4/20) | 법안 키워드 추출·분야 분류·한줄 요약, 표결 하이라이트, SEO 선거구 페이지, 공유 버튼 |
+| Week 1 (4/14-4/20) | 법안 키워드·분야·요약, 표결 하이라이트, 의원 상세 페이지 셸(`/members/[monaCd]`), 전체 의원 목록(`/members`, 비례대표 포함), SEO 선거구 페이지, 공유 버튼 |
 | Week 2 (4/21-4/27) | `LocalGovernor` 도메인 + 배치, 시도·시군구 GeoJSON, 지도 모드 전환 UI |
 | Week 3 (4/28-5/4) | `Candidate` 도메인 + 배치, 후보자 비교 뷰, 선거 모드 지도, 모바일 최적화 |
 
@@ -37,7 +37,7 @@
 - **Day 1 필수**: 선관위 후보자 API·지자체장 데이터 외부 API 가용성 검증 스파이크 먼저
 
 ### Degradation Plan (일정 지연 시)
-- Week 1 밀리면: 법안 요약을 LLM 대신 규칙 기반(법안명 파싱)으로 단순화
+- Week 1 밀리면: 법안 요약을 LLM 대신 규칙 기반(법안명 파싱)으로 단순화, 전체 의원 목록은 필터 없이 리스트+검색으로 축소
 - Week 2 밀리면: 지자체장을 시/도 단위만 구현 (`sido.geojson` 활용, 시군구 생략)
 - 전체 밀리면: 법안 인사이트 + 선거 후보자 기본 정보 우선 배포, 지자체장은 선거 이후
 
@@ -55,6 +55,8 @@
 - 모바일 breakpoint: 768px. 데스크톱은 사이드 패널, 모바일은 바텀 시트
 - 후보자 데이터 없을 때: 200 + `registrationStatus: PENDING` (404 금지)
 - 지자체장 없는 지역: 404 대신 "데이터 준비 중" 응답
+- 비례대표는 지도 표시 불가 → `/members` 전체 목록이 보조 진입점. 모든 의원 상세는 `/members/[monaCd]`로 통일
+- 지도 사이드 패널(`MemberPanel`)은 미리보기 역할, 법안 인사이트·표결 하이라이트·재산·전과는 상세 페이지에 수용
 
 ## 디렉토리 구조
 ```
@@ -77,17 +79,20 @@ backend/src/main/java/com/assembly/
 frontend/
 ├── components/
 │   ├── DistrictMap.tsx       # Leaflet 지도 (v2: 모드별 strategy 패턴으로 리팩토링)
-│   ├── MemberPanel.tsx       # 의원 상세 패널
+│   ├── MemberPanel.tsx       # 지도 사이드 미리보기 ([v2] 상세는 /members/[monaCd]로 이동)
 │   ├── GovernorPanel.tsx     # [v2] 지자체장 패널
 │   ├── CandidatePanel.tsx    # [v2] 후보자 패널
 │   ├── CompareView.tsx       # [v2] 후보자 비교 뷰
-│   ├── BillInsight.tsx       # [v2] 법안 키워드·요약·분야 분류
-│   ├── VoteHighlights.tsx    # [v2] 주요 안건 표결 하이라이트
+│   ├── BillInsight.tsx       # [v2] 법안 키워드·요약·분야 분류 (의원 상세 페이지에 위치)
+│   ├── VoteHighlights.tsx    # [v2] 주요 안건 표결 하이라이트 (의원 상세 페이지에 위치)
 │   └── MapModeToggle.tsx     # [v2] 국회의원/지자체장/선거 모드 전환
 ├── lib/api.ts                # API 클라이언트
 ├── lib/constants.ts          # 정당 색상 등 상수
 ├── pages/
 │   ├── index.tsx             # 메인 (지도)
+│   ├── members/
+│   │   ├── index.tsx         # [v2] 전체 의원 목록 (지역구+비례대표, 정당/위원회/초선 필터)
+│   │   └── [monaCd].tsx      # [v2] 의원 상세 페이지 (BillInsight·VoteHighlights 호스트)
 │   ├── district/[sggCode].tsx    # [v2] SEO용 선거구 랜딩
 │   └── election/[regionCode].tsx # [v2] 선거 후보자 비교
 └── public/data/
@@ -151,6 +156,10 @@ GET /api/v1/members/{monaCode}/bills      # 법안 발의 내역
 GET /api/v1/members/{monaCode}/votes      # 표결 내역
 GET /api/v1/members/{monaCode}/attendance # 표결 참여율
 GET /api/v1/members/search                # 이름·정당·지역 통합 검색
+
+# v2 신규 — 의원 목록·상세
+GET /api/v1/members                       # 전체 의원 목록 (정당·위원회·초선·선출방식 필터, 페이징)
+# 선출방식 필터: DISTRICT(지역구) / PROPORTIONAL(비례대표)
 
 # v2 신규 — 법안 인사이트
 GET /api/v1/members/{monaCode}/bill-summary    # 법안 분야 분류 + 키워드
