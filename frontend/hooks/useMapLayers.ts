@@ -195,11 +195,7 @@ export function useMapLayers({
     if (!L || !map) return;
 
     if (bounds) {
-      const panelOpen = isPanelOpenRef.current && window.innerWidth >= 768;
-      const fitOpts = panelOpen
-        ? { paddingTopLeft: [48, 32] as [number, number], paddingBottomRight: [488, 32] as [number, number], maxZoom: 11, animate: true }
-        : { padding: [32, 48] as [number, number], maxZoom: 11, animate: true };
-      map.fitBounds(bounds, fitOpts);
+      map.fitBounds(bounds, { padding: [32, 48] as [number, number], maxZoom: 11, animate: true });
     }
 
     const cachedGeoJson = distCacheRef.current.get(sidoCode);

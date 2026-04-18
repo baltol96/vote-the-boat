@@ -106,6 +106,26 @@ export interface AttendanceSummaryResponse {
   }[];
 }
 
+export interface BillCategorySummary {
+  category: string;
+  count: number;
+  topKeywords: string[];
+}
+
+export interface BillSummaryResponse {
+  totalBills: number;
+  categories: BillCategorySummary[];
+}
+
+export interface VoteHighlightResponse {
+  billNo: string;
+  billName: string;
+  voteDt: string;
+  result: 'YES' | 'NO' | 'ABSTAIN';
+  billUrl?: string;
+  committee?: string;
+}
+
 export interface PageResponse<T> {
   content: T[];
   page: number;
@@ -142,6 +162,12 @@ export const memberApi = {
 
   getAttendanceSummary: (monaCode: string) =>
     api.get<AttendanceSummaryResponse>(`/members/${monaCode}/attendance-summary`).then(r => r.data),
+
+  getBillSummary: (monaCode: string) =>
+    api.get<BillSummaryResponse>(`/members/${monaCode}/bill-summary`).then(r => r.data),
+
+  getVoteHighlights: (monaCode: string) =>
+    api.get<VoteHighlightResponse[]>(`/members/${monaCode}/vote-highlights`).then(r => r.data),
 
   search: (params: { name?: string; party?: string; sido?: string }) =>
     api.get<MemberResponse[]>('/members/search', { params }).then(r => r.data),

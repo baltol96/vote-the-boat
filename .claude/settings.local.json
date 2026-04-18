@@ -76,7 +76,10 @@
       "Bash(tasklist:*)",
       "Bash(wait)",
       "Bash(du -sh \"C:/Users/User/.claude/projects/D--workspaces-vote-the-boat/\"*.jsonl)",
-      "Bash(py --version)"
+      "Bash(py --version)",
+      "Skill(investigate)",
+      "Skill(gstack)",
+      "Bash(npm list *)"
     ]
   }
 }

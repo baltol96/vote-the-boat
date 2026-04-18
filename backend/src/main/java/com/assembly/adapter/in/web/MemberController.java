@@ -4,6 +4,9 @@ import com.assembly.application.attendance.AttendanceSummaryResult;
 import com.assembly.application.attendance.port.in.GetAttendanceUseCase;
 import com.assembly.application.bill.BillResult;
 import com.assembly.application.bill.port.in.GetBillUseCase;
+import com.assembly.application.billinsight.BillSummaryResult;
+import com.assembly.application.billinsight.VoteHighlightResult;
+import com.assembly.application.billinsight.port.in.GetBillInsightUseCase;
 import com.assembly.application.common.PageResult;
 import com.assembly.application.member.MemberResult;
 import com.assembly.application.member.port.in.GetMemberUseCase;
@@ -29,6 +32,7 @@ public class MemberController {
     private final GetBillUseCase getBillUseCase;
     private final GetVoteUseCase getVoteUseCase;
     private final GetAttendanceUseCase getAttendanceUseCase;
+    private final GetBillInsightUseCase getBillInsightUseCase;
 
     @GetMapping("/{monaCode}")
     public ResponseEntity<MemberResult> getMember(@PathVariable String monaCode) {
@@ -58,6 +62,16 @@ public class MemberController {
     @GetMapping("/{monaCode}/attendance-summary")
     public ResponseEntity<AttendanceSummaryResult> getAttendanceSummary(@PathVariable String monaCode) {
         return ResponseEntity.ok(getAttendanceUseCase.getAttendanceSummary(monaCode));
+    }
+
+    @GetMapping("/{monaCode}/bill-summary")
+    public ResponseEntity<BillSummaryResult> getBillSummary(@PathVariable String monaCode) {
+        return ResponseEntity.ok(getBillInsightUseCase.getBillSummary(monaCode));
+    }
+
+    @GetMapping("/{monaCode}/vote-highlights")
+    public ResponseEntity<List<VoteHighlightResult>> getVoteHighlights(@PathVariable String monaCode) {
+        return ResponseEntity.ok(getBillInsightUseCase.getVoteHighlights(monaCode));
     }
 
     @GetMapping("/search")

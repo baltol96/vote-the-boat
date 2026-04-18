@@ -1,6 +1,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useReducer, useState, useRef } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import MemberPanel from '@/components/MemberPanel';
 import { districtApi, memberApi, MemberResponse } from '@/lib/api';
 import { getPartyColor } from '@/lib/constants';
@@ -242,6 +243,37 @@ export default function Home() {
               </span>
             </div>
           </div>
+
+          <div className="h-5 w-px shrink-0" style={{ background: SEP }} />
+
+          {/* 페이지 탭 */}
+          <nav className="flex items-center gap-0.5 shrink-0">
+            <span
+              className="flex items-center gap-1.5 px-3 h-7 rounded-lg font-jakarta text-xs font-semibold transition-colors"
+              style={{
+                background: 'var(--color-primary-container)',
+                color: 'var(--color-primary-fixed)',
+              }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+              </svg>
+              지도
+            </span>
+            <Link
+              href="/members"
+              className="flex items-center gap-1.5 px-3 h-7 rounded-lg font-jakarta text-xs font-medium transition-colors hover:opacity-80"
+              style={{
+                color: 'var(--color-on-surface)',
+                opacity: 0.55,
+              }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              전체 의원
+            </Link>
+          </nav>
 
           <div className="h-5 w-px shrink-0" style={{ background: SEP }} />
 

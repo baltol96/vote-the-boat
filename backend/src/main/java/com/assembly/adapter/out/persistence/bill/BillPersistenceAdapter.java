@@ -49,6 +49,11 @@ public class BillPersistenceAdapter implements BillPort {
     }
 
     @Override
+    public List<Bill> findAllByMonaCd(String monaCd) {
+        return billJpaRepository.findByMonaCd(monaCd);
+    }
+
+    @Override
     public List<Bill> saveAll(List<Bill> bills) {
         return billJpaRepository.saveAll(bills);
     }

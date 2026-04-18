@@ -6,10 +6,12 @@ import Head from 'next/head';
 import Link from 'next/link';
 import clsx from 'clsx';
 import { memberApi, MemberResponse, AttendanceResponse, BillResponse, PageResponse } from '@/lib/api';
-import { MemberProfile } from '@/components/MemberProfile';
-import { BillList }      from '@/components/BillList';
-import { VoteTab }       from '@/components/VoteTab';
-import { AttendanceTab } from '@/components/AttendanceTab';
+import { MemberProfile }  from '@/components/MemberProfile';
+import { BillList }       from '@/components/BillList';
+import { VoteTab }        from '@/components/VoteTab';
+import { AttendanceTab }  from '@/components/AttendanceTab';
+import { BillInsight }    from '@/components/BillInsight';
+import { VoteHighlights } from '@/components/VoteHighlights';
 
 
 const SEP = '1px solid rgba(100,135,165,0.25)';
@@ -151,14 +153,14 @@ export default function MemberDetailPage() {
           className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-surface-low/90 backdrop-blur-sm"
           style={{ borderBottom: SEP }}
         >
-          <Link
-            href="/"
+          <button
+            onClick={() => router.back()}
             className="flex items-center justify-center w-8 h-8 rounded-full text-on-surface/50 hover:text-on-surface hover:bg-surface-high/70 transition-all"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
-          </Link>
+          </button>
           <span className="font-manrope text-sm font-semibold text-on-surface/60 truncate flex-1">
             {member?.district ?? '\u00A0'}
           </span>
@@ -193,12 +195,12 @@ export default function MemberDetailPage() {
           ) : error || !member ? (
             <div className="flex flex-col items-center justify-center py-24 gap-4 px-6">
               <p className="font-jakarta text-sm text-red-500 text-center">{error ?? '데이터 없음'}</p>
-              <Link
-                href="/"
+              <button
+                onClick={() => router.back()}
                 className="font-jakarta text-xs text-on-surface/50 hover:text-on-surface/80 transition-colors"
               >
-                지도로 돌아가기
-              </Link>
+                돌아가기
+              </button>
             </div>
           ) : (
             <>
@@ -230,9 +232,30 @@ export default function MemberDetailPage() {
               <div className="px-6 py-5">
                 {activeTab === 'info'       && <InfoTab member={member} />}
                 {activeTab === 'attendance' && <AttendanceTab monaCd={monaCode!} />}
-                {activeTab === 'bills'      && <BillList bills={bills} />}
+                {activeTab === 'bills'      && (
+                  <div className="flex flex-col gap-6">
+                    <section>
+                      <p className="font-jakarta text-[11px] font-semibold text-on-surface/40 uppercase tracking-widest mb-3">법안 인사이트</p>
+                      <BillInsight monaCd={monaCode!} />
+                    </section>
+                    <div style={{ borderTop: SEP }} />
+                    <section>
+                      <p className="font-jakarta text-[11px] font-semibold text-on-surface/40 uppercase tracking-widest mb-3">발의 법안 목록</p>
+                      <BillList bills={bills} />
+                    </section>
+                  </div>
+                )}
                 {activeTab === 'votes'      && (
-                  <VoteTab monaCd={monaCode!} attendanceSummary={attendance} />
+                  <div className="flex flex-col gap-6">
+                    <section>
+                      <p className="font-jakarta text-[11px] font-semibold text-on-surface/40 uppercase tracking-widest mb-3">주요 표결 하이라이트</p>
+                      <VoteHighlights monaCd={monaCode!} />
+                    </section>
+                    <div style={{ borderTop: SEP }} />
+                    <section>
+                      <VoteTab monaCd={monaCode!} attendanceSummary={attendance} />
+                    </section>
+                  </div>
                 )}
               </div>
             </>

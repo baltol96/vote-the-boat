@@ -24,28 +24,43 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
   const [bills,      setBills]      = useState<PageResponse<BillResponse> | null>(null);
   const [activeTab,  setActiveTab]  = useState<'info' | 'attendance' | 'bills' | 'votes' | 'history'>('info');
   const [loading,    setLoading]    = useState(true);
+  const [billsLoading, setBillsLoading] = useState(false);
   const [error,      setError]      = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
+    setMember(null);
+    setBills(null);
+    setAttendance(null);
     setActiveTab('info');
-    Promise.allSettled([
-      memberApi.getMember(monaCd),
-      memberApi.getAttendance(monaCd),
-      memberApi.getBills(monaCd, 0, 200),
-    ])
-      .then(([memberRes, attendanceRes, billsRes]) => {
-        if (memberRes.status === 'rejected') {
-          setError('의원 정보를 불러오지 못했습니다.');
-          return;
-        }
-        setMember(memberRes.value);
-        if (attendanceRes.status === 'fulfilled') setAttendance(attendanceRes.value);
-        if (billsRes.status === 'fulfilled') setBills(billsRes.value);
+
+    // getMember 먼저 → 즉시 렌더 (사진 포함)
+    memberApi.getMember(monaCd)
+      .then(m => {
+        setMember(m);
+        setLoading(false);
       })
-      .finally(() => setLoading(false));
+      .catch(() => {
+        setError('의원 정보를 불러오지 못했습니다.');
+        setLoading(false);
+      });
+
+    // 나머지는 백그라운드에서 — 렌더를 블록하지 않음
+    memberApi.getAttendance(monaCd)
+      .then(setAttendance)
+      .catch(() => {});
   }, [monaCd]);
+
+  // 법안 탭 진입 시 lazy fetch
+  useEffect(() => {
+    if (activeTab !== 'bills' || bills !== null || billsLoading) return;
+    setBillsLoading(true);
+    memberApi.getBills(monaCd, 0, 200)
+      .then(setBills)
+      .catch(() => {})
+      .finally(() => setBillsLoading(false));
+  }, [activeTab, monaCd, bills, billsLoading]);
 
   if (loading) {
     return (
@@ -188,7 +203,14 @@ export default function MemberPanel({ monaCd, sggCode, onClose }: MemberPanelPro
           </div>
         )}
 
-        {activeTab === 'bills'      && <BillList      bills={bills} />}
+        {activeTab === 'bills'      && (
+          billsLoading
+            ? <div className="flex justify-center py-8">
+                <div className="w-6 h-6 rounded-full border-2 animate-spin"
+                     style={{ borderColor: 'rgba(13,110,105,0.15)', borderTopColor: '#0d6e69' }} />
+              </div>
+            : <BillList bills={bills} />
+        )}
         {activeTab === 'attendance' && <AttendanceTab monaCd={monaCd} />}
         {activeTab === 'votes'      && <VoteTab       monaCd={monaCd} attendanceSummary={attendance} />}
         {activeTab === 'history'    && <HistoryTab    sggCode={sggCode} />}

@@ -23,4 +23,6 @@ public interface BillJpaRepository extends JpaRepository<Bill, Long> {
 
     @Query("SELECT b.billId FROM Bill b WHERE b.billId IS NOT NULL AND b.billId <> '' AND b.age = :age")
     List<String> findAllBillIdsByAge(@Param("age") String age);
+
+    List<Bill> findByMonaCd(String monaCd);
 }
