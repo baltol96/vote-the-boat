@@ -1,11 +1,13 @@
 package com.assembly.adapter.in.web;
 
+import com.assembly.application.asset.AssetResult;
+import com.assembly.application.asset.port.in.GetAssetUseCase;
 import com.assembly.application.attendance.AttendanceSummaryResult;
 import com.assembly.application.attendance.port.in.GetAttendanceUseCase;
 import com.assembly.application.bill.BillResult;
 import com.assembly.application.bill.port.in.GetBillUseCase;
 import com.assembly.application.billinsight.BillSummaryResult;
-import com.assembly.application.billinsight.VoteHighlightResult;
+import com.assembly.application.billinsight.VoteSummaryResult;
 import com.assembly.application.billinsight.port.in.GetBillInsightUseCase;
 import com.assembly.application.common.PageResult;
 import com.assembly.application.member.MemberResult;
@@ -21,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/members")
@@ -33,6 +36,7 @@ public class MemberController {
     private final GetVoteUseCase getVoteUseCase;
     private final GetAttendanceUseCase getAttendanceUseCase;
     private final GetBillInsightUseCase getBillInsightUseCase;
+    private final GetAssetUseCase getAssetUseCase;
 
     @GetMapping("/{monaCode}")
     public ResponseEntity<MemberResult> getMember(@PathVariable String monaCode) {
@@ -70,8 +74,15 @@ public class MemberController {
     }
 
     @GetMapping("/{monaCode}/vote-highlights")
-    public ResponseEntity<List<VoteHighlightResult>> getVoteHighlights(@PathVariable String monaCode) {
+    public ResponseEntity<VoteSummaryResult> getVoteHighlights(@PathVariable String monaCode) {
         return ResponseEntity.ok(getBillInsightUseCase.getVoteHighlights(monaCode));
+    }
+
+    @GetMapping("/{monaCode}/assets")
+    public ResponseEntity<AssetResult> getAssets(@PathVariable String monaCode) {
+        Optional<AssetResult> result = getAssetUseCase.getLatestAsset(monaCode);
+        return result.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
     }
 
     @GetMapping("/search")

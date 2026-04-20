@@ -25,6 +25,7 @@ public class BatchApplicationService implements BatchTriggerUseCase {
     private final Job collectHistoricalProfilesJob;
     private final Job collectPlenaryAttendanceJob;
     private final Job collectCommitteeAttendanceJob;
+    private final Job collectAssetsJob;
     private final VotePort votePort;
 
     public BatchApplicationService(JobLauncher jobLauncher,
@@ -34,6 +35,7 @@ public class BatchApplicationService implements BatchTriggerUseCase {
                                    @Qualifier("collectHistoricalProfilesJob") Job collectHistoricalProfilesJob,
                                    @Qualifier("collectPlenaryAttendanceJob") Job collectPlenaryAttendanceJob,
                                    @Qualifier("collectCommitteeAttendanceJob") Job collectCommitteeAttendanceJob,
+                                   @Qualifier("collectAssetsJob") Job collectAssetsJob,
                                    VotePort votePort) {
         this.jobLauncher = jobLauncher;
         this.collectMembersJob = collectMembersJob;
@@ -42,6 +44,7 @@ public class BatchApplicationService implements BatchTriggerUseCase {
         this.collectHistoricalProfilesJob = collectHistoricalProfilesJob;
         this.collectPlenaryAttendanceJob = collectPlenaryAttendanceJob;
         this.collectCommitteeAttendanceJob = collectCommitteeAttendanceJob;
+        this.collectAssetsJob = collectAssetsJob;
         this.votePort = votePort;
     }
 
@@ -109,6 +112,22 @@ public class BatchApplicationService implements BatchTriggerUseCase {
         } catch (Exception e) {
             log.error("전체 배치 실행 실패", e);
             throw new RuntimeException("전체 배치 실행 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public BatchResult runAssets(String pdfPath) {
+        try {
+            JobParameters params = new JobParametersBuilder()
+                    .addLocalDateTime("runAt", LocalDateTime.now())
+                    .addString("pdfPath", pdfPath)
+                    .toJobParameters();
+            JobExecution execution = jobLauncher.run(collectAssetsJob, params);
+            log.info("collectAssetsJob 실행: executionId={}, status={}", execution.getId(), execution.getStatus());
+            return new BatchResult("collectAssetsJob", execution.getId(), execution.getStatus().name());
+        } catch (Exception e) {
+            log.error("collectAssetsJob 실행 실패", e);
+            throw new RuntimeException("배치 실행 실패: collectAssetsJob - " + e.getMessage(), e);
         }
     }
 

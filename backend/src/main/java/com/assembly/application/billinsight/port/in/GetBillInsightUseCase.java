@@ -1,11 +1,9 @@
 package com.assembly.application.billinsight.port.in;
 
 import com.assembly.application.billinsight.BillSummaryResult;
-import com.assembly.application.billinsight.VoteHighlightResult;
-
-import java.util.List;
+import com.assembly.application.billinsight.VoteSummaryResult;
 
 public interface GetBillInsightUseCase {
     BillSummaryResult getBillSummary(String monaCd);
-    List<VoteHighlightResult> getVoteHighlights(String monaCd);
+    VoteSummaryResult getVoteHighlights(String monaCd);
 }

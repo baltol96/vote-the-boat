@@ -1,28 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { memberApi, VoteHighlightResponse } from '@/lib/api';
+import { useEffect, useState, useMemo } from 'react';
+import dynamic from 'next/dynamic';
+import { memberApi, VoteSummaryResponse } from '@/lib/api';
+
+const WordCloudChart = dynamic(() => import('./WordCloudChart'), { ssr: false });
 
 const SEP = '1px solid rgba(100,135,165,0.25)';
 
-const RESULT_LABEL: Record<string, string> = {
-  YES:     '찬성',
-  NO:      '반대',
-  ABSTAIN: '기권',
-};
-
-const RESULT_STYLE: Record<string, { bg: string; color: string; border: string }> = {
-  YES:     { bg: 'rgba(52,211,153,0.12)',  color: '#059669', border: 'rgba(52,211,153,0.3)' },
-  NO:      { bg: 'rgba(248,113,113,0.12)', color: '#dc2626', border: 'rgba(248,113,113,0.3)' },
-  ABSTAIN: { bg: 'rgba(148,163,184,0.12)', color: '#64748b', border: 'rgba(148,163,184,0.3)' },
-};
+// 찬성 > 반대 → 녹색, 반대 > 찬성 → 빨강, 그 외 → 회색
+function dominantColor(yes: number, no: number): string {
+  if (yes > no) return '#059669';
+  if (no > yes) return '#dc2626';
+  return '#64748b';
+}
 
 interface Props {
   monaCd: string;
 }
 
 export function VoteHighlights({ monaCd }: Props) {
-  const [votes, setVotes]     = useState<VoteHighlightResponse[]>([]);
+  const [data, setData]       = useState<VoteSummaryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(false);
 
@@ -30,10 +28,25 @@ export function VoteHighlights({ monaCd }: Props) {
     setLoading(true);
     setError(false);
     memberApi.getVoteHighlights(monaCd)
-      .then(setVotes)
+      .then(setData)
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [monaCd]);
+
+  const { words, colorMap } = useMemo(() => {
+    if (!data) return { words: [], colorMap: {} };
+
+    const colorMap: Record<string, string> = {};
+    const words = data.categories.flatMap((cat) => {
+      const color = dominantColor(cat.yes, cat.no);
+      return cat.topKeywords.map((kw) => {
+        colorMap[kw] = color;
+        return { text: kw, value: cat.yes + cat.no + cat.abstain };
+      });
+    });
+
+    return { words, colorMap };
+  }, [data]);
 
   if (loading) {
     return (
@@ -46,73 +59,57 @@ export function VoteHighlights({ monaCd }: Props) {
     );
   }
 
-  if (error) {
+  if (error || !data) {
     return <p className="font-jakarta text-xs text-on-surface/40">데이터를 불러오지 못했습니다.</p>;
   }
 
-  if (votes.length === 0) {
+  if (data.totalVotes === 0 || data.categories.length === 0) {
     return <p className="font-jakarta text-xs text-on-surface/40">표결 내역이 없습니다.</p>;
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      {votes.map((vote) => {
-        const style = RESULT_STYLE[vote.result] ?? RESULT_STYLE.ABSTAIN;
+    <div className="flex flex-col gap-4">
+      <div className="flex items-baseline gap-2">
+        <span className="font-manrope text-2xl font-bold text-on-surface">{data.totalVotes}</span>
+        <span className="font-jakarta text-xs text-on-surface/50">건 표결 참여</span>
+      </div>
 
-        return (
-          <div
-            key={vote.billNo}
-            className="flex items-start gap-3 px-4 py-3 rounded-xl"
-            style={{ border: SEP, background: 'rgba(100,135,165,0.04)' }}
-          >
-            {/* 결과 배지 */}
-            <span
-              className="shrink-0 px-2 py-0.5 rounded-full font-jakarta text-[11px] font-semibold mt-0.5"
-              style={{
-                background: style.bg,
-                color:      style.color,
-                border:     `1px solid ${style.border}`,
-              }}
-            >
-              {RESULT_LABEL[vote.result]}
-            </span>
+      <div
+        className="w-full rounded-2xl overflow-hidden"
+        style={{ height: 260, background: 'rgba(100,135,165,0.04)', border: SEP }}
+      >
+        {words.length > 0 && (
+          <WordCloudChart
+            words={words}
+            getWordColor={(word) => colorMap[word.text] ?? '#64748b'}
+          />
+        )}
+      </div>
 
-            {/* 법안 정보 */}
-            <div className="flex flex-col gap-0.5 min-w-0">
-              {vote.billUrl ? (
-                <a
-                  href={vote.billUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-jakarta text-xs text-on-surface/80 leading-snug line-clamp-2 hover:text-primary transition-colors"
-                >
-                  {vote.billName}
-                </a>
-              ) : (
-                <p className="font-jakarta text-xs text-on-surface/80 leading-snug line-clamp-2">
-                  {vote.billName}
-                </p>
-              )}
-
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="font-jakarta text-[10px] text-on-surface/35">{vote.voteDt}</span>
-                {vote.committee && (
-                  <>
-                    <span className="text-on-surface/20 text-[10px]">·</span>
-                    <span className="font-jakarta text-[10px] text-on-surface/35 truncate">{vote.committee}</span>
-                  </>
-                )}
-              </div>
+      {/* 카테고리별 찬성/반대 범례 */}
+      <div className="flex flex-col gap-1.5">
+        {data.categories.map((cat) => {
+          const total = cat.yes + cat.no + cat.abstain;
+          const color = dominantColor(cat.yes, cat.no);
+          return (
+            <div key={cat.category} className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+              <span className="font-jakarta text-[10px] text-on-surface/60 w-14 shrink-0">{cat.category}</span>
+              <span className="font-jakarta text-[10px] text-on-surface/40">
+                찬성 {cat.yes} · 반대 {cat.no}
+                {cat.abstain > 0 && ` · 기권 ${cat.abstain}`}
+                <span className="text-on-surface/25 ml-1">({total}건)</span>
+              </span>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
 
       <p
         className="font-jakarta text-[10px] text-on-surface/30 pt-2 text-center"
         style={{ borderTop: SEP }}
       >
-        최근 표결 내역 (불참 제외) · 판단은 시민이 합니다
+        불참 제외 표결 기준 · 판단은 시민이 합니다
       </p>
     </div>
   );

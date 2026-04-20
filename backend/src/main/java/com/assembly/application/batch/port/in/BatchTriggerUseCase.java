@@ -13,4 +13,5 @@ public interface BatchTriggerUseCase {
     BatchResult runPlenaryAttendance();
     BatchResult runCommitteeAttendance();
     Map<String, BatchResult> runAll();
+    BatchResult runAssets(String pdfPath);
 }

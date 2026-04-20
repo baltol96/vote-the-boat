@@ -1,28 +1,38 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import clsx from 'clsx';
 import { memberApi, MemberResponse, AttendanceResponse, BillResponse, PageResponse } from '@/lib/api';
+import { PARTY_COLORS, PARTY_COLOR_FALLBACK } from '@/lib/constants';
+
+function getPartyBadgeStyle(party?: string): React.CSSProperties {
+  if (!party) return { backgroundColor: `${PARTY_COLOR_FALLBACK}26`, color: PARTY_COLOR_FALLBACK };
+  for (const [key, color] of Object.entries(PARTY_COLORS)) {
+    if (party.includes(key)) return { backgroundColor: `${color}26`, color };
+  }
+  return { backgroundColor: `${PARTY_COLOR_FALLBACK}26`, color: PARTY_COLOR_FALLBACK };
+}
 import { MemberProfile }  from '@/components/MemberProfile';
 import { BillList }       from '@/components/BillList';
 import { VoteTab }        from '@/components/VoteTab';
 import { AttendanceTab }  from '@/components/AttendanceTab';
 import { BillInsight }    from '@/components/BillInsight';
-import { VoteHighlights } from '@/components/VoteHighlights';
+import { AssetTab }       from '@/components/AssetTab';
 
 
 const SEP = '1px solid rgba(100,135,165,0.25)';
 
-type TabKey = 'info' | 'attendance' | 'bills' | 'votes';
+type TabKey = 'info' | 'attendance' | 'bills' | 'votes' | 'assets';
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'info',       label: '기본정보' },
   { key: 'attendance', label: '출결현황' },
   { key: 'bills',      label: '법안발의' },
   { key: 'votes',      label: '표결현황' },
+  { key: 'assets',     label: '재산정보' },
 ];
 
 // ── 기본정보 탭 ───────────────────────────────────────────────────────────────
@@ -95,12 +105,25 @@ export default function MemberDetailPage() {
   const router   = useRouter();
   const monaCode = router.query.monaCode as string | undefined;
 
-  const [member,     setMember]     = useState<MemberResponse | null>(null);
-  const [attendance, setAttendance] = useState<AttendanceResponse | null>(null);
-  const [bills,      setBills]      = useState<PageResponse<BillResponse> | null>(null);
-  const [activeTab,  setActiveTab]  = useState<TabKey>('info');
-  const [loading,    setLoading]    = useState(true);
-  const [error,      setError]      = useState<string | null>(null);
+  const [member,        setMember]        = useState<MemberResponse | null>(null);
+  const [attendance,    setAttendance]    = useState<AttendanceResponse | null>(null);
+  const [bills,         setBills]         = useState<PageResponse<BillResponse> | null>(null);
+  const [activeTab,     setActiveTab]     = useState<TabKey>('info');
+  const [loading,       setLoading]       = useState(true);
+  const [error,         setError]         = useState<string | null>(null);
+  const [showNameInNav, setShowNameInNav] = useState(false);
+  const tabSentinelRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = tabSentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowNameInNav(!entry.isIntersecting),
+      { rootMargin: '-53px 0px 0px 0px', threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loading]);
 
   useEffect(() => {
     if (!monaCode) return;
@@ -150,19 +173,35 @@ export default function MemberDetailPage() {
       <div className="min-h-screen bg-surface-low">
         {/* 상단 내비게이션 */}
         <nav
-          className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-surface-low/90 backdrop-blur-sm"
+          className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-surface-low"
           style={{ borderBottom: SEP }}
         >
           <button
             onClick={() => router.back()}
-            className="flex items-center justify-center w-8 h-8 rounded-full text-on-surface/50 hover:text-on-surface hover:bg-surface-high/70 transition-all"
+            className="flex items-center justify-center w-8 h-8 rounded-full text-on-surface/50 hover:text-on-surface hover:bg-surface-high/70 transition-all shrink-0"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
           </button>
-          <span className="font-manrope text-sm font-semibold text-on-surface/60 truncate flex-1">
+          <span className="font-manrope text-sm font-semibold text-on-surface/60 truncate shrink-0">
             {member?.district ?? '\u00A0'}
+          </span>
+          <span className="flex items-center justify-center gap-2 flex-1 min-w-0">
+            <span
+              className="font-manrope text-sm font-semibold text-on-surface truncate transition-opacity duration-200"
+              style={{ opacity: showNameInNav ? 1 : 0 }}
+            >
+              {member?.name}
+            </span>
+            {member && (
+              <span
+                className="text-xs px-2 py-0.5 rounded-full font-jakarta font-medium shrink-0 transition-opacity duration-200"
+                style={{ ...getPartyBadgeStyle(member.party), opacity: showNameInNav ? 1 : 0 }}
+              >
+                {member.party}
+              </span>
+            )}
           </span>
           {member && (
             <button
@@ -207,6 +246,9 @@ export default function MemberDetailPage() {
               {/* 프로필 */}
               <MemberProfile member={member} />
 
+              {/* 탭 sticky 감지용 sentinel */}
+              <div ref={tabSentinelRef} />
+
               {/* 탭 네비게이션 */}
               <div
                 className="flex justify-center px-4 pt-4 pb-2 gap-0.5 sticky top-[53px] z-10 bg-surface-low"
@@ -248,15 +290,11 @@ export default function MemberDetailPage() {
                 {activeTab === 'votes'      && (
                   <div className="flex flex-col gap-6">
                     <section>
-                      <p className="font-jakarta text-[11px] font-semibold text-on-surface/40 uppercase tracking-widest mb-3">주요 표결 하이라이트</p>
-                      <VoteHighlights monaCd={monaCode!} />
-                    </section>
-                    <div style={{ borderTop: SEP }} />
-                    <section>
                       <VoteTab monaCd={monaCode!} attendanceSummary={attendance} />
                     </section>
                   </div>
                 )}
+                {activeTab === 'assets'    && <AssetTab monaCd={monaCode!} />}
               </div>
             </>
           )}

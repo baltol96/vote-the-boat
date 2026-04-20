@@ -117,13 +117,37 @@ export interface BillSummaryResponse {
   categories: BillCategorySummary[];
 }
 
-export interface VoteHighlightResponse {
-  billNo: string;
-  billName: string;
-  voteDt: string;
-  result: 'YES' | 'NO' | 'ABSTAIN';
-  billUrl?: string;
-  committee?: string;
+export interface VoteCategorySummary {
+  category: string;
+  yes: number;
+  no: number;
+  abstain: number;
+  topKeywords: string[];
+}
+
+export interface VoteSummaryResponse {
+  totalVotes: number;
+  categories: VoteCategorySummary[];
+}
+
+export interface AssetItemResponse {
+  relation: string;
+  desc: string;
+  amountManwon: number;
+}
+
+export interface AssetCategoryResponse {
+  name: string;
+  count: number;
+  amountManwon: number;
+  percentage: number;
+  items: AssetItemResponse[];
+}
+
+export interface AssetResponse {
+  declareYear: number;
+  totalAmountManwon: number;
+  categories: AssetCategoryResponse[];
 }
 
 export interface PageResponse<T> {
@@ -167,7 +191,10 @@ export const memberApi = {
     api.get<BillSummaryResponse>(`/members/${monaCode}/bill-summary`).then(r => r.data),
 
   getVoteHighlights: (monaCode: string) =>
-    api.get<VoteHighlightResponse[]>(`/members/${monaCode}/vote-highlights`).then(r => r.data),
+    api.get<VoteSummaryResponse>(`/members/${monaCode}/vote-highlights`).then(r => r.data),
+
+  getAssets: (monaCode: string) =>
+    api.get<AssetResponse>(`/members/${monaCode}/assets`).then(r => r.data),
 
   search: (params: { name?: string; party?: string; sido?: string }) =>
     api.get<MemberResponse[]>('/members/search', { params }).then(r => r.data),

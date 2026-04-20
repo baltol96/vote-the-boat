@@ -79,7 +79,19 @@
       "Bash(py --version)",
       "Skill(investigate)",
       "Skill(gstack)",
-      "Bash(npm list *)"
+      "Bash(npm list *)",
+      "Bash(pip3 list *)",
+      "Bash(grep -Ev \"^\\\\\"use strict|var [a-z]=|^\\\\s*$\")",
+      "Bash(grep -Ev \"^\\\\s*$\")",
+      "Bash(./gradlew compileJava -x test)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d[0]['monaCd'] if d else 'not found'\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(m['monaCd'], m['name']\\) for m in d.get\\('content',[]\\)]\")",
+      "Bash(where psql *)",
+      "Read(//c/Program Files/PostgreSQL/**)",
+      "Bash(PGPASSWORD=assembly /c/Program Files/PostgreSQL/17/bin/psql.exe *)",
+      "Bash(PGPASSWORD=assembly \"/c/Program Files/PostgreSQL/17/bin/psql.exe\" -h localhost -p 5433 -U assembly -d assembly -c \"\\\\dt\")",
+      "Bash(winget list *)",
+      "WebFetch(domain:namu.wiki)"
     ]
   }
 }

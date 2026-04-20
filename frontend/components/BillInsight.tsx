@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { memberApi, BillSummaryResponse } from '@/lib/api';
 
-const ReactWordcloud = dynamic(() => import('react-wordcloud'), { ssr: false });
+const WordCloudChart = dynamic(() => import('./WordCloudChart'), { ssr: false });
 
 const SEP = '1px solid rgba(100,135,165,0.25)';
 
@@ -21,17 +21,6 @@ const CATEGORY_COLOR: Record<string, string> = {
   기타:    '#6b7280',
 };
 
-const WORDCLOUD_OPTIONS = {
-  rotations: 2,
-  rotationAngles: [0, 0] as [number, number],
-  fontSizes: [13, 52] as [number, number],
-  fontFamily: 'Plus Jakarta Sans, sans-serif',
-  fontWeight: 'bold',
-  padding: 4,
-  spiral: 'archimedean' as const,
-  enableTooltip: false,
-  deterministic: true,
-};
 
 interface Props {
   monaCd: string;
@@ -97,12 +86,9 @@ export function BillInsight({ monaCd }: Props) {
         style={{ height: 260, background: 'rgba(100,135,165,0.04)', border: SEP }}
       >
         {words.length > 0 && (
-          <ReactWordcloud
+          <WordCloudChart
             words={words}
-            options={WORDCLOUD_OPTIONS}
-            callbacks={{
-              getWordColor: (word) => colorMap[word.text] ?? '#6b7280',
-            }}
+            getWordColor={(word) => colorMap[word.text] ?? '#6b7280'}
           />
         )}
       </div>
