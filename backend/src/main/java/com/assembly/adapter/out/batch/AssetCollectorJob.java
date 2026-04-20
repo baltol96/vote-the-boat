@@ -36,7 +36,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AssetCollectorJob {
 
-    private static final int DECLARE_YEAR = 2026;
 
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
@@ -66,8 +65,11 @@ public class AssetCollectorJob {
             if (pdfPath == null || pdfPath.isBlank()) {
                 throw new IllegalArgumentException("JobParameter 'pdfPath'가 필요합니다");
             }
+            Long declareYearParam = (Long) chunkContext.getStepContext()
+                    .getJobParameters().get("declareYear");
+            int declareYear = (declareYearParam != null) ? declareYearParam.intValue() : 2025;
 
-            log.info("재산 PDF 파싱 시작: {}", pdfPath);
+            log.info("재산 PDF 파싱 시작: {}, 신고연도: {}", pdfPath, declareYear);
 
             // 1. 이름 → monaCd 맵 구성
             Map<String, String> nameToMonaCd = buildNameMap();
@@ -87,13 +89,13 @@ public class AssetCollectorJob {
                     continue;
                 }
 
-                if (assetPort.existsByMonaCdAndDeclareYear(monaCd, DECLARE_YEAR)) {
+                if (assetPort.existsByMonaCdAndDeclareYear(monaCd, declareYear)) {
                     skipped++;
                     continue;
                 }
 
                 try {
-                    Asset asset = buildAsset(monaCd, data);
+                    Asset asset = buildAsset(monaCd, data, declareYear);
                     assetPort.save(asset);
                     saved++;
                 } catch (Exception e) {
@@ -115,7 +117,7 @@ public class AssetCollectorJob {
         return map;
     }
 
-    private Asset buildAsset(String monaCd, AssetPdfParser.MemberAssetData data) throws Exception {
+    private Asset buildAsset(String monaCd, AssetPdfParser.MemberAssetData data, int declareYear) throws Exception {
         // 천원 → 만원 변환
         BigDecimal totalManwon = cheonToManwon(data.totalCheonwon());
 
@@ -159,7 +161,7 @@ public class AssetCollectorJob {
 
         return Asset.builder()
                 .monaCd(monaCd)
-                .declareYear(DECLARE_YEAR)
+                .declareYear(declareYear)
                 .totalAmount(totalManwon)
                 .landAmount(land)
                 .buildingAmount(building)

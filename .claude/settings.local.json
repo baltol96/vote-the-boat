@@ -91,7 +91,16 @@
       "Bash(PGPASSWORD=assembly /c/Program Files/PostgreSQL/17/bin/psql.exe *)",
       "Bash(PGPASSWORD=assembly \"/c/Program Files/PostgreSQL/17/bin/psql.exe\" -h localhost -p 5433 -U assembly -d assembly -c \"\\\\dt\")",
       "Bash(winget list *)",
-      "WebFetch(domain:namu.wiki)"
+      "WebFetch(domain:namu.wiki)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(powershell -Command ' *)",
+      "Bash(python *)",
+      "Bash(echo \"PID: $!\")",
+      "WebFetch(domain:data.nec.go.kr)",
+      "WebFetch(domain:www.laiis.go.kr)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:policy.nec.go.kr)",
+      "Bash(awk '{depth=gsub\\(/\\\\//,$0\\); printf \"%s%s\\\\n\", sprintf\\(\"%*s\", depth*2, \"\"\\), substr\\($0, index\\($0, $NF\\)\\)}')"
     ]
   }
 }

@@ -13,5 +13,6 @@ public interface BatchTriggerUseCase {
     BatchResult runPlenaryAttendance();
     BatchResult runCommitteeAttendance();
     Map<String, BatchResult> runAll();
-    BatchResult runAssets(String pdfPath);
+    BatchResult runAssets(String pdfPath, int declareYear);
+    BatchResult runGovernors(String sgId);
 }

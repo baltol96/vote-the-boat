@@ -18,7 +18,7 @@ import java.util.Map;
 @Service
 public class BatchApplicationService implements BatchTriggerUseCase {
 
-    private final JobLauncher jobLauncher;
+    private final JobLauncher asyncJobLauncher;
     private final Job collectMembersJob;
     private final Job collectBillsJob;
     private final Job collectVotesJob;
@@ -28,7 +28,7 @@ public class BatchApplicationService implements BatchTriggerUseCase {
     private final Job collectAssetsJob;
     private final VotePort votePort;
 
-    public BatchApplicationService(JobLauncher jobLauncher,
+    public BatchApplicationService(@Qualifier("asyncJobLauncher") JobLauncher asyncJobLauncher,
                                    @Qualifier("collectMembersJob") Job collectMembersJob,
                                    @Qualifier("collectBillsJob") Job collectBillsJob,
                                    @Qualifier("collectVotesJob") Job collectVotesJob,
@@ -37,7 +37,7 @@ public class BatchApplicationService implements BatchTriggerUseCase {
                                    @Qualifier("collectCommitteeAttendanceJob") Job collectCommitteeAttendanceJob,
                                    @Qualifier("collectAssetsJob") Job collectAssetsJob,
                                    VotePort votePort) {
-        this.jobLauncher = jobLauncher;
+        this.asyncJobLauncher = asyncJobLauncher;
         this.collectMembersJob = collectMembersJob;
         this.collectBillsJob = collectBillsJob;
         this.collectVotesJob = collectVotesJob;
@@ -73,8 +73,8 @@ public class BatchApplicationService implements BatchTriggerUseCase {
                     .addLocalDateTime("runAt", LocalDateTime.now())
                     .addString("skipDuplicateCheck", "true")
                     .toJobParameters();
-            JobExecution execution = jobLauncher.run(collectVotesJob, params);
-            log.info("collectVotesJob(reload) 실행: executionId={}, status={}", execution.getId(), execution.getStatus());
+            JobExecution execution = asyncJobLauncher.run(collectVotesJob, params);
+            log.info("collectVotesJob(reload) 시작: executionId={}, status={}", execution.getId(), execution.getStatus());
             return new BatchResult("collectVotesJob", execution.getId(), execution.getStatus().name());
         } catch (Exception e) {
             log.error("collectVotesJob(reload) 실행 실패", e);
@@ -101,9 +101,9 @@ public class BatchApplicationService implements BatchTriggerUseCase {
     public Map<String, BatchResult> runAll() {
         JobParameters params = buildParams();
         try {
-            JobExecution m = jobLauncher.run(collectMembersJob, params);
-            JobExecution b = jobLauncher.run(collectBillsJob, params);
-            JobExecution v = jobLauncher.run(collectVotesJob, params);
+            JobExecution m = asyncJobLauncher.run(collectMembersJob, params);
+            JobExecution b = asyncJobLauncher.run(collectBillsJob, params);
+            JobExecution v = asyncJobLauncher.run(collectVotesJob, params);
             return Map.of(
                     "members", new BatchResult("collectMembersJob", m.getId(), m.getStatus().name()),
                     "bills",   new BatchResult("collectBillsJob",   b.getId(), b.getStatus().name()),
@@ -116,14 +116,15 @@ public class BatchApplicationService implements BatchTriggerUseCase {
     }
 
     @Override
-    public BatchResult runAssets(String pdfPath) {
+    public BatchResult runAssets(String pdfPath, int declareYear) {
         try {
             JobParameters params = new JobParametersBuilder()
                     .addLocalDateTime("runAt", LocalDateTime.now())
                     .addString("pdfPath", pdfPath)
+                    .addLong("declareYear", (long) declareYear)
                     .toJobParameters();
-            JobExecution execution = jobLauncher.run(collectAssetsJob, params);
-            log.info("collectAssetsJob 실행: executionId={}, status={}", execution.getId(), execution.getStatus());
+            JobExecution execution = asyncJobLauncher.run(collectAssetsJob, params);
+            log.info("collectAssetsJob 시작: executionId={}, status={}", execution.getId(), execution.getStatus());
             return new BatchResult("collectAssetsJob", execution.getId(), execution.getStatus().name());
         } catch (Exception e) {
             log.error("collectAssetsJob 실행 실패", e);
@@ -133,8 +134,8 @@ public class BatchApplicationService implements BatchTriggerUseCase {
 
     private BatchResult run(Job job, String jobName) {
         try {
-            JobExecution execution = jobLauncher.run(job, buildParams());
-            log.info("{} 실행: executionId={}, status={}", jobName, execution.getId(), execution.getStatus());
+            JobExecution execution = asyncJobLauncher.run(job, buildParams());
+            log.info("{} 시작: executionId={}, status={}", jobName, execution.getId(), execution.getStatus());
             return new BatchResult(jobName, execution.getId(), execution.getStatus().name());
         } catch (Exception e) {
             log.error("{} 실행 실패", jobName, e);

@@ -85,6 +85,13 @@ public class MemberController {
                 .orElse(ResponseEntity.noContent().build());
     }
 
+    @GetMapping("/{monaCode}/assets/all")
+    public ResponseEntity<List<AssetResult>> getAllAssets(@PathVariable String monaCode) {
+        List<AssetResult> results = getAssetUseCase.getAllAssets(monaCode);
+        if (results.isEmpty()) return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(results);
+    }
+
     @GetMapping("/search")
     public ResponseEntity<List<MemberResult>> search(
             @RequestParam(required = false) String name,

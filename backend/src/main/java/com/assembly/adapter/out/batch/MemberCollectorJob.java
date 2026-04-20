@@ -123,7 +123,7 @@ public class MemberCollectorJob {
                 String district   = trunc(get(districts, i), 100);
                 String elecType   = trunc(get(elecTypes, i), 20);
                 String sggCode    = null;
-                if (termNumber.equals(currentAssemblyTerm)) {
+                if (termNumber.equals(currentAssemblyTerm) && !"비례대표".equals(district)) {
                     sggCode = trunc(resolveSggCode(district, mappings), 20);
                     if (sggCode == null && district != null && isCurrent) {
                         log.warn("sggCode 미매핑 선거구: '{}' (monaCd={})", district, monaCd);
@@ -190,6 +190,8 @@ public class MemberCollectorJob {
         if (value == null || value.isBlank()) return null;
         String trimmed = value.trim();
         if (trimmed.matches("^\\d{4}$")) return LocalDate.of(Integer.parseInt(trimmed), 1, 1);
+        // API가 월/일에 00을 내려보내는 경우 (예: "1999-00-00") → 01로 대체
+        trimmed = trimmed.replace("-00", "-01");
         try {
             return trimmed.contains("-")
                     ? LocalDate.parse(trimmed, BIRTH_FMT_DASH)

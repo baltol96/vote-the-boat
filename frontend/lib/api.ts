@@ -196,6 +196,9 @@ export const memberApi = {
   getAssets: (monaCode: string) =>
     api.get<AssetResponse>(`/members/${monaCode}/assets`).then(r => r.data),
 
+  getAssetsAll: (monaCode: string) =>
+    api.get<AssetResponse[]>(`/members/${monaCode}/assets/all`).then(r => r.data),
+
   search: (params: { name?: string; party?: string; sido?: string }) =>
     api.get<MemberResponse[]>('/members/search', { params }).then(r => r.data),
 };

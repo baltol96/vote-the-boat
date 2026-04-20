@@ -122,7 +122,10 @@ public class Member {
         this.email = email;
         this.phone = phone;
         this.officeRoom = officeRoom;
-        this.status = status;
+        // RESIGNED는 수동 관리 — 배치가 덮어쓰지 않음
+        if (this.status != MemberStatus.RESIGNED) {
+            this.status = status;
+        }
         this.assemblyTerm = assemblyTerm;
     }
 

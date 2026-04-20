@@ -65,8 +65,10 @@ public class BatchController {
     }
 
     @PostMapping("/assets")
-    public ResponseEntity<BatchResult> runAssetsJob(@RequestParam String pdfPath) {
-        return ResponseEntity.ok(batchTriggerUseCase.runAssets(pdfPath));
+    public ResponseEntity<BatchResult> runAssetsJob(
+            @RequestParam String pdfPath,
+            @RequestParam(defaultValue = "2025") int declareYear) {
+        return ResponseEntity.ok(batchTriggerUseCase.runAssets(pdfPath, declareYear));
     }
 
     /** PDF 구조 진단: 파서 결과 + 원본 텍스트(3~5페이지) 반환 */
