@@ -42,6 +42,10 @@ assembly:
     key: ${ASSEMBLY_API_KEY:9349e48ebe1349cc90c66d3423dc854b}
   current-term: 22  # 현재 국회 대수 (23대 전환 시 이 값만 변경)
 
+election:
+  api:
+    key: ${ELECTION_API_KEY:6bdc81f6999278b6cdf32678143303fe239b1ef68d1260a5ccf7a31fc02f6070}
+
 admin:
   api-key: ${ADMIN_API_KEY:dev-secret-key}   # 프로덕션에서는 반드시 환경변수로 교체
 

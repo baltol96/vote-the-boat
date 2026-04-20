@@ -64,6 +64,18 @@ public class BatchController {
         return ResponseEntity.ok(batchTriggerUseCase.runAll());
     }
 
+    @PostMapping("/governors")
+    public ResponseEntity<BatchResult> runGovernorsJob(
+            @RequestParam(defaultValue = "20220601") String sgId) {
+        return ResponseEntity.ok(batchTriggerUseCase.runGovernors(sgId));
+    }
+
+    @PostMapping("/governor-pledges")
+    public ResponseEntity<BatchResult> runGovernorPledgesJob(
+            @RequestParam(defaultValue = "20220601") String sgId) {
+        return ResponseEntity.ok(batchTriggerUseCase.runGovernorPledges(sgId));
+    }
+
     @PostMapping("/assets")
     public ResponseEntity<BatchResult> runAssetsJob(
             @RequestParam String pdfPath,

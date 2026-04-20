@@ -26,6 +26,8 @@ public class BatchApplicationService implements BatchTriggerUseCase {
     private final Job collectPlenaryAttendanceJob;
     private final Job collectCommitteeAttendanceJob;
     private final Job collectAssetsJob;
+    private final Job collectGovernorsJob;
+    private final Job collectGovernorPledgesJob;
     private final VotePort votePort;
 
     public BatchApplicationService(@Qualifier("asyncJobLauncher") JobLauncher asyncJobLauncher,
@@ -36,6 +38,8 @@ public class BatchApplicationService implements BatchTriggerUseCase {
                                    @Qualifier("collectPlenaryAttendanceJob") Job collectPlenaryAttendanceJob,
                                    @Qualifier("collectCommitteeAttendanceJob") Job collectCommitteeAttendanceJob,
                                    @Qualifier("collectAssetsJob") Job collectAssetsJob,
+                                   @Qualifier("collectGovernorsJob") Job collectGovernorsJob,
+                                   @Qualifier("collectGovernorPledgesJob") Job collectGovernorPledgesJob,
                                    VotePort votePort) {
         this.asyncJobLauncher = asyncJobLauncher;
         this.collectMembersJob = collectMembersJob;
@@ -45,6 +49,8 @@ public class BatchApplicationService implements BatchTriggerUseCase {
         this.collectPlenaryAttendanceJob = collectPlenaryAttendanceJob;
         this.collectCommitteeAttendanceJob = collectCommitteeAttendanceJob;
         this.collectAssetsJob = collectAssetsJob;
+        this.collectGovernorsJob = collectGovernorsJob;
+        this.collectGovernorPledgesJob = collectGovernorPledgesJob;
         this.votePort = votePort;
     }
 
@@ -129,6 +135,38 @@ public class BatchApplicationService implements BatchTriggerUseCase {
         } catch (Exception e) {
             log.error("collectAssetsJob 실행 실패", e);
             throw new RuntimeException("배치 실행 실패: collectAssetsJob - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public BatchResult runGovernors(String sgId) {
+        try {
+            JobParameters params = new JobParametersBuilder()
+                    .addLocalDateTime("runAt", LocalDateTime.now())
+                    .addString("sgId", sgId != null ? sgId : "20220601")
+                    .toJobParameters();
+            JobExecution execution = asyncJobLauncher.run(collectGovernorsJob, params);
+            log.info("collectGovernorsJob 시작: executionId={}, status={}", execution.getId(), execution.getStatus());
+            return new BatchResult("collectGovernorsJob", execution.getId(), execution.getStatus().name());
+        } catch (Exception e) {
+            log.error("collectGovernorsJob 실행 실패", e);
+            throw new RuntimeException("배치 실행 실패: collectGovernorsJob - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public BatchResult runGovernorPledges(String sgId) {
+        try {
+            JobParameters params = new JobParametersBuilder()
+                    .addLocalDateTime("runAt", LocalDateTime.now())
+                    .addString("sgId", sgId != null ? sgId : "20220601")
+                    .toJobParameters();
+            JobExecution execution = asyncJobLauncher.run(collectGovernorPledgesJob, params);
+            log.info("collectGovernorPledgesJob 시작: executionId={}, status={}", execution.getId(), execution.getStatus());
+            return new BatchResult("collectGovernorPledgesJob", execution.getId(), execution.getStatus().name());
+        } catch (Exception e) {
+            log.error("collectGovernorPledgesJob 실행 실패", e);
+            throw new RuntimeException("배치 실행 실패: collectGovernorPledgesJob - " + e.getMessage(), e);
         }
     }
 
