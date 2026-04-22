@@ -273,6 +273,19 @@ export default function Home() {
               </svg>
               전체 의원
             </Link>
+            <Link
+              href="/governors"
+              className="flex items-center gap-1.5 px-3 h-7 rounded-lg font-jakarta text-xs font-medium transition-colors hover:opacity-80"
+              style={{
+                color: 'var(--color-on-surface)',
+                opacity: 0.55,
+              }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              지자체장
+            </Link>
           </nav>
 
           <div className="h-5 w-px shrink-0" style={{ background: SEP }} />

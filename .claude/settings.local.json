@@ -100,7 +100,11 @@
       "WebFetch(domain:www.laiis.go.kr)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:policy.nec.go.kr)",
-      "Bash(awk '{depth=gsub\\(/\\\\//,$0\\); printf \"%s%s\\\\n\", sprintf\\(\"%*s\", depth*2, \"\"\\), substr\\($0, index\\($0, $NF\\)\\)}')"
+      "Bash(awk '{depth=gsub\\(/\\\\//,$0\\); printf \"%s%s\\\\n\", sprintf\\(\"%*s\", depth*2, \"\"\\), substr\\($0, index\\($0, $NF\\)\\)}')",
+      "Bash(where pg_isready)",
+      "Read(//c/Program Files \\(x86\\)/**)",
+      "Bash(PGPASSWORD=assembly /c/Program Files/PostgreSQL/17/bin/psql *)",
+      "Bash('/c/Program Files/PostgreSQL/17/bin/psql' -h localhost -p 5433 -U assembly -d assembly -c ' *)"
     ]
   }
 }

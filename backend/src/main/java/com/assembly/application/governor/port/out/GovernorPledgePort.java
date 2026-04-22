@@ -7,4 +7,5 @@ import java.util.List;
 public interface GovernorPledgePort {
     void deleteByHuboid(String huboid);
     List<GovernorPledge> saveAll(List<GovernorPledge> pledges);
+    List<GovernorPledge> findByHuboid(String huboid);
 }

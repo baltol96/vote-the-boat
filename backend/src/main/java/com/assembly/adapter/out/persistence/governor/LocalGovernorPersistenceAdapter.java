@@ -1,6 +1,7 @@
 package com.assembly.adapter.out.persistence.governor;
 
 import com.assembly.application.governor.port.out.LocalGovernorPort;
+import com.assembly.domain.governor.GovernorType;
 import com.assembly.domain.governor.LocalGovernor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,11 @@ public class LocalGovernorPersistenceAdapter implements LocalGovernorPort {
     @Override
     public List<LocalGovernor> findBySgId(String sgId) {
         return repository.findBySgId(sgId);
+    }
+
+    @Override
+    public List<LocalGovernor> findByGovernorType(GovernorType governorType) {
+        return repository.findByGovernorType(governorType);
     }
 
     @Override

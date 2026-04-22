@@ -24,4 +24,9 @@ public class GovernorPledgePersistenceAdapter implements GovernorPledgePort {
     public List<GovernorPledge> saveAll(List<GovernorPledge> pledges) {
         return repository.saveAll(pledges);
     }
+
+    @Override
+    public List<GovernorPledge> findByHuboid(String huboid) {
+        return repository.findByHuboidOrderByPledgeOrderAsc(huboid);
+    }
 }

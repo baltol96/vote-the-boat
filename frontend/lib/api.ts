@@ -159,6 +159,41 @@ export interface PageResponse<T> {
   last: boolean;
 }
 
+export interface GovernorResponse {
+  huboid: string;
+  name: string;
+  party?: string;
+  governorType: 'METRO_MAYOR' | 'DISTRICT_HEAD';
+  sdName?: string;
+  sggName?: string;
+  birthday?: string;
+  gender?: string;
+  edu?: string;
+  career1?: string;
+  career2?: string;
+}
+
+export interface PledgeResponse {
+  order: number;
+  realmName?: string;
+  title: string;
+  content?: string;
+}
+
+export interface GovernorDetailResponse extends GovernorResponse {
+  addr?: string;
+  job?: string;
+  pledges: PledgeResponse[];
+}
+
+export const governorApi = {
+  getMetroMayors: () =>
+    api.get<GovernorResponse[]>('/governors').then(r => r.data),
+
+  getGovernorDetail: (huboid: string) =>
+    api.get<GovernorDetailResponse>(`/governors/${huboid}`).then(r => r.data),
+};
+
 export const districtApi = {
   getMemberBySggCode: (sggCode: string) =>
     api.get<MemberResponse>(`/districts/${sggCode}/member`).then(r => r.data),
