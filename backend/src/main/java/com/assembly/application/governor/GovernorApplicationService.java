@@ -27,6 +27,14 @@ public class GovernorApplicationService implements GetGovernorUseCase {
     }
 
     @Override
+    public List<GovernorResult> getDistrictGovernorsBySido(String sdName) {
+        return localGovernorPort.findBySdNameAndGovernorType(sdName, GovernorType.DISTRICT_HEAD)
+                .stream()
+                .map(GovernorResult::from)
+                .toList();
+    }
+
+    @Override
     public GovernorDetailResult getGovernorDetail(String huboid) {
         LocalGovernor governor = localGovernorPort.findByHuboid(huboid)
                 .orElseThrow(() -> new NoSuchElementException("지자체장을 찾을 수 없습니다: " + huboid));

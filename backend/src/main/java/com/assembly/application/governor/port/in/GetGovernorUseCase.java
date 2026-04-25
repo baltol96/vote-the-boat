@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface GetGovernorUseCase {
     List<GovernorResult> getMetroMayors();
+    List<GovernorResult> getDistrictGovernorsBySido(String sdName);
     GovernorDetailResult getGovernorDetail(String huboid);
 }

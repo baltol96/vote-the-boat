@@ -10,5 +10,6 @@ public interface LocalGovernorPort {
     Optional<LocalGovernor> findByHuboid(String huboid);
     List<LocalGovernor> findBySgId(String sgId);
     List<LocalGovernor> findByGovernorType(GovernorType governorType);
+    List<LocalGovernor> findBySdNameAndGovernorType(String sdName, GovernorType governorType);
     LocalGovernor save(LocalGovernor governor);
 }

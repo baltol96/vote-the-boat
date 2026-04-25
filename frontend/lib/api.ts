@@ -190,6 +190,9 @@ export const governorApi = {
   getMetroMayors: () =>
     api.get<GovernorResponse[]>('/governors').then(r => r.data),
 
+  getDistrictGovernors: (sdName: string) =>
+    api.get<GovernorResponse[]>('/governors/districts', { params: { sdName } }).then(r => r.data),
+
   getGovernorDetail: (huboid: string) =>
     api.get<GovernorDetailResponse>(`/governors/${huboid}`).then(r => r.data),
 };

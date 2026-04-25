@@ -4,6 +4,13 @@ import { useEffect, useState } from 'react';
 import { GovernorDetailResponse, governorApi } from '@/lib/api';
 import { getPartyColor } from '@/lib/constants';
 
+const formatBirthday = (raw?: string) => {
+  if (!raw) return undefined;
+  const s = raw.replace(/\D/g, '');
+  if (s.length !== 8) return raw;
+  return `${s.slice(0, 4)}년 ${parseInt(s.slice(4, 6))}월 ${parseInt(s.slice(6, 8))}일`;
+};
+
 interface GovernorPanelProps {
   huboid: string;
   onClose?: () => void;
@@ -93,7 +100,7 @@ export default function GovernorPanel({ huboid, onClose }: GovernorPanelProps) {
                  style={{ color: '#8fa3b8' }}>기본 정보</p>
               <dl className="space-y-2">
                 {[
-                  { label: '생년월일', value: governor.birthday },
+                  { label: '생년월일', value: formatBirthday(governor.birthday) },
                   { label: '성별',    value: governor.gender },
                   { label: '직업',    value: governor.job },
                   { label: '학력',    value: governor.edu },

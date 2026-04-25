@@ -3,10 +3,12 @@ import { useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import GovernorPanel from '@/components/GovernorPanel';
+import GovernorSplitPanel from '@/components/GovernorSplitPanel';
 
 const GovernorMap = dynamic(() => import('@/components/GovernorMap'), { ssr: false });
 
 export default function GovernorsPage() {
+  const [selectedSdName, setSelectedSdName] = useState<string | null>(null);
   const [selectedHuboid, setSelectedHuboid] = useState<string | null>(null);
   const [isMobile, setIsMobile]             = useState(false);
   const [sheetHeight, setSheetHeight]       = useState(40);
@@ -23,15 +25,50 @@ export default function GovernorsPage() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
+  const handleSidoClick = (sdName: string) => {
+    setSelectedSdName(sdName);
+    setSelectedHuboid(null);
+    if (isMobile) setSheetHeight(90);
+  };
+
   const handleGovernorSelect = (huboid: string) => {
     setSelectedHuboid(huboid);
     if (isMobile) setSheetHeight(90);
   };
 
   const handleClose = () => {
-    setSelectedHuboid(null);
-    if (isMobile) setSheetHeight(40);
+    if (selectedHuboid && selectedSdName) {
+      // 상세 → 스플릿 패널로 복귀
+      setSelectedHuboid(null);
+    } else {
+      setSelectedSdName(null);
+      setSelectedHuboid(null);
+      if (isMobile) setSheetHeight(40);
+    }
   };
+
+  const isPanelOpen = !!selectedSdName || !!selectedHuboid;
+
+  const panelContent = (() => {
+    if (selectedHuboid) {
+      return (
+        <GovernorPanel
+          huboid={selectedHuboid}
+          onClose={handleClose}
+        />
+      );
+    }
+    if (selectedSdName) {
+      return (
+        <GovernorSplitPanel
+          sdName={selectedSdName}
+          onGovernorSelect={handleGovernorSelect}
+          onClose={handleClose}
+        />
+      );
+    }
+    return null;
+  })();
 
   const handleDragStart = (e: React.TouchEvent) => {
     dragStartY.current = e.touches[0].clientY;
@@ -54,10 +91,8 @@ export default function GovernorsPage() {
       Math.abs(a - sheetHeight) < Math.abs(b - sheetHeight) ? a : b
     );
     setSheetHeight(closest);
-    if (closest === 15 && selectedHuboid) handleClose();
+    if (closest === 15) handleClose();
   };
-
-  const isPanelOpen = !!selectedHuboid;
 
   return (
     <>
@@ -94,8 +129,9 @@ export default function GovernorsPage() {
           <div className="flex-1 relative transition-all duration-300"
                style={{ marginRight: !isMobile && isPanelOpen ? 440 : 0 }}>
             <GovernorMap
-              onGovernorSelect={handleGovernorSelect}
-              selectedHuboid={selectedHuboid ?? undefined}
+              onSidoClick={handleSidoClick}
+              onSigunguClick={handleGovernorSelect}
+              selectedSdName={selectedSdName ?? undefined}
               isPanelOpen={!isMobile && isPanelOpen}
             />
           </div>
@@ -111,9 +147,7 @@ export default function GovernorsPage() {
                 background: 'var(--color-panel-bg, #f4f7fb)',
                 zIndex: 20,
               }}>
-              {selectedHuboid && (
-                <GovernorPanel huboid={selectedHuboid} onClose={handleClose} />
-              )}
+              {panelContent}
             </div>
           )}
 
@@ -128,7 +162,6 @@ export default function GovernorsPage() {
                 boxShadow: '0 -4px 24px rgba(0,0,0,0.25)',
                 transition: isDragging.current ? 'none' : 'height 0.2s ease-out',
               }}>
-              {/* 드래그 핸들 */}
               <div
                 className="flex justify-center pt-2.5 pb-1 cursor-grab active:cursor-grabbing"
                 onTouchStart={handleDragStart}
@@ -137,7 +170,7 @@ export default function GovernorsPage() {
                 <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(100,135,165,0.3)' }} />
               </div>
               <div className="overflow-y-auto" style={{ height: 'calc(100% - 28px)' }}>
-                <GovernorPanel huboid={selectedHuboid} onClose={handleClose} />
+                {panelContent}
               </div>
             </div>
           )}

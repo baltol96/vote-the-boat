@@ -11,4 +11,5 @@ public interface LocalGovernorJpaRepository extends JpaRepository<LocalGovernor,
     Optional<LocalGovernor> findByHuboid(String huboid);
     List<LocalGovernor> findBySgId(String sgId);
     List<LocalGovernor> findByGovernorType(GovernorType governorType);
+    List<LocalGovernor> findBySdNameAndGovernorType(String sdName, GovernorType governorType);
 }

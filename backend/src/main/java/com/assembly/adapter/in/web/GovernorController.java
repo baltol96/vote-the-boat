@@ -22,6 +22,11 @@ public class GovernorController {
         return ResponseEntity.ok(getGovernorUseCase.getMetroMayors());
     }
 
+    @GetMapping("/districts")
+    public ResponseEntity<List<GovernorResult>> getDistrictGovernors(@RequestParam String sdName) {
+        return ResponseEntity.ok(getGovernorUseCase.getDistrictGovernorsBySido(sdName));
+    }
+
     @GetMapping("/{huboid}")
     public ResponseEntity<GovernorDetailResult> getGovernorDetail(@PathVariable String huboid) {
         try {

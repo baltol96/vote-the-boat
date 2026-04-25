@@ -31,6 +31,11 @@ public class LocalGovernorPersistenceAdapter implements LocalGovernorPort {
     }
 
     @Override
+    public List<LocalGovernor> findBySdNameAndGovernorType(String sdName, GovernorType governorType) {
+        return repository.findBySdNameAndGovernorType(sdName, governorType);
+    }
+
+    @Override
     public LocalGovernor save(LocalGovernor governor) {
         return repository.save(governor);
     }
