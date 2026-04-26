@@ -82,6 +82,7 @@ export default function MembersPage() {
 
       <div className="flex flex-col h-screen font-inter overflow-hidden"
            style={{ background: 'var(--color-surface)', color: 'var(--color-on-surface)' }}>
+        <h1 className="sr-only">22대 국회 전체 의원 목록 — Vote the Boat</h1>
 
         {/* ── 헤더 ── */}
         <header

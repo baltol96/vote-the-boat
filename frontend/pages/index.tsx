@@ -253,6 +253,7 @@ export default function Home() {
 
       <div className="flex flex-col h-screen font-inter overflow-hidden"
            style={{ background: 'var(--color-surface)', color: 'var(--color-on-surface)' }}>
+        <h1 className="sr-only">Vote the Boat — 국회의원·지자체장 의정활동 투명성 플랫폼</h1>
 
         {/* ── 헤더 ── */}
         <header

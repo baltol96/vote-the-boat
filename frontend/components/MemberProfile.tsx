@@ -35,7 +35,7 @@ export function MemberProfile({ member }: MemberProfileProps) {
         </div>
       )}
       <div className="flex flex-col gap-2.5 pt-1">
-        <span className="font-manrope text-2xl font-bold text-on-surface">{member.name}</span>
+        <h1 className="font-manrope text-2xl font-bold text-on-surface">{member.name}</h1>
         <span
           className="text-xs px-3 py-1 rounded-full w-fit font-jakarta font-medium"
           style={getPartyBadgeStyle(member.party)}
