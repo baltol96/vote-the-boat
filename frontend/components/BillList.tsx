@@ -28,9 +28,12 @@ interface BillListProps {
   bills: PageResponse<BillResponse> | null;
 }
 
+const PAGE_SIZE = 20;
+
 export function BillList({ bills }: BillListProps) {
   const [billFilter, setBillFilter]   = useState<string | null>(null);
   const [billRoleTab, setBillRoleTab] = useState<'all' | 'main' | 'co'>('all');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   if (!bills || bills.content.length === 0) {
     return <p className="font-jakarta text-xs text-on-surface/40">발의 법안이 없습니다.</p>;
@@ -71,7 +74,7 @@ export function BillList({ bills }: BillListProps) {
           return (
             <button
               key={role}
-              onClick={() => { setBillRoleTab(role); setBillFilter(null); }}
+              onClick={() => { setBillRoleTab(role); setBillFilter(null); setVisibleCount(PAGE_SIZE); }}
               className="flex-1 py-2 font-jakarta text-xs font-medium transition-all"
               style={{
                 background:  isActive ? 'rgba(13,110,105,0.1)' : 'var(--color-surface-high)',
@@ -131,7 +134,7 @@ export function BillList({ bills }: BillListProps) {
               return (
                 <button
                   key={entry.status}
-                  onClick={() => setBillFilter(isActive ? null : entry.status)}
+                  onClick={() => { setBillFilter(isActive ? null : entry.status); setVisibleCount(PAGE_SIZE); }}
                   className="flex items-center gap-2 rounded-lg px-1.5 py-0.5 transition-all text-left"
                   style={{
                     background: isActive ? `${entry.color}20` : 'transparent',
@@ -162,39 +165,60 @@ export function BillList({ bills }: BillListProps) {
       </div>
 
       {/* 법안 목록 */}
-      {bills.content
-        .filter((bill) => billFilter === null || bill.status === billFilter)
-        .filter((bill) =>
-          billRoleTab === 'all'
-            ? true
-            : billRoleTab === 'main'
-              ? bill.proposerRole === '대표발의'
-              : bill.proposerRole === '공동발의',
-        )
-        .map((bill) => (
-          <div key={bill.billNo} className="rounded-xl p-4 bg-surface-high" style={{ border: SEP }}>
-            <p className="font-jakarta text-xs font-medium text-on-surface/90 line-clamp-2 leading-relaxed">
-              {bill.billName}
-            </p>
-            <div className="flex gap-2 mt-2 items-center min-w-0">
-              <span className="font-jakarta text-xs text-on-surface/40 shrink-0">{bill.proposeDt}</span>
-              <span
-                className="px-2.5 py-0.5 rounded-full text-xs font-jakarta font-medium shrink-0 whitespace-nowrap"
+      {(() => {
+        const filtered = bills.content
+          .filter((bill) => billFilter === null || bill.status === billFilter)
+          .filter((bill) =>
+            billRoleTab === 'all'
+              ? true
+              : billRoleTab === 'main'
+                ? bill.proposerRole === '대표발의'
+                : bill.proposerRole === '공동발의',
+          );
+        const visible = filtered.slice(0, visibleCount);
+        const hasMore = filtered.length > visibleCount;
+        return (
+          <>
+            {visible.map((bill) => (
+              <div key={bill.billNo} className="rounded-xl p-4 bg-surface-high" style={{ border: SEP }}>
+                <p className="font-jakarta text-xs font-medium text-on-surface/90 line-clamp-2 leading-relaxed">
+                  {bill.billName}
+                </p>
+                <div className="flex gap-2 mt-2 items-center min-w-0">
+                  <span className="font-jakarta text-xs text-on-surface/40 shrink-0">{bill.proposeDt}</span>
+                  <span
+                    className="px-2.5 py-0.5 rounded-full text-xs font-jakarta font-medium shrink-0 whitespace-nowrap"
+                    style={{
+                      backgroundColor: `${BILL_STATUS_COLOR[bill.status] ?? '#94a3b8'}22`,
+                      color:           BILL_STATUS_COLOR[bill.status] ?? '#94a3b8',
+                    }}
+                  >
+                    {BILL_STATUS_LABEL[bill.status] ?? bill.status}
+                  </span>
+                  {bill.committee && (
+                    <span className="font-jakarta text-xs text-on-surface/40 truncate min-w-0">
+                      {bill.committee}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+            {hasMore && (
+              <button
+                onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+                className="w-full py-3 rounded-xl font-jakarta text-xs font-medium transition-all hover:opacity-80"
                 style={{
-                  backgroundColor: `${BILL_STATUS_COLOR[bill.status] ?? '#94a3b8'}22`,
-                  color:           BILL_STATUS_COLOR[bill.status] ?? '#94a3b8',
+                  border: SEP,
+                  background: 'rgba(13,110,105,0.05)',
+                  color: '#0d6e69',
                 }}
               >
-                {BILL_STATUS_LABEL[bill.status] ?? bill.status}
-              </span>
-              {bill.committee && (
-                <span className="font-jakarta text-xs text-on-surface/40 truncate min-w-0">
-                  {bill.committee}
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
+                더 보기 ({filtered.length - visibleCount}건 남음)
+              </button>
+            )}
+          </>
+        );
+      })()}
     </div>
   );
 }
