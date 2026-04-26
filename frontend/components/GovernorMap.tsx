@@ -190,7 +190,6 @@ export default function GovernorMap({ onSidoClick, onSigunguClick, onReset, sele
             featureLayer.on({
               mouseover: (e: any) => {
                 e.target.setStyle({ fillOpacity: 0.88, weight: 2.5 });
-                e.target.bringToFront();
               },
               mouseout: (e: any) => { layer.resetStyle(e.target); },
               click: () => { if (gov?.huboid) onSigunguClickRef.current?.(gov.huboid); },
