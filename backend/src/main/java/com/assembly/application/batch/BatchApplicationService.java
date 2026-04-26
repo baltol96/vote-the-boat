@@ -28,6 +28,7 @@ public class BatchApplicationService implements BatchTriggerUseCase {
     private final Job collectAssetsJob;
     private final Job collectGovernorsJob;
     private final Job collectGovernorPledgesJob;
+    private final Job wikidataGovernorPhotoJob;
     private final VotePort votePort;
 
     public BatchApplicationService(@Qualifier("asyncJobLauncher") JobLauncher asyncJobLauncher,
@@ -40,6 +41,7 @@ public class BatchApplicationService implements BatchTriggerUseCase {
                                    @Qualifier("collectAssetsJob") Job collectAssetsJob,
                                    @Qualifier("collectGovernorsJob") Job collectGovernorsJob,
                                    @Qualifier("collectGovernorPledgesJob") Job collectGovernorPledgesJob,
+                                   @Qualifier("collectGovernorPhotosJob") Job wikidataGovernorPhotoJob,
                                    VotePort votePort) {
         this.asyncJobLauncher = asyncJobLauncher;
         this.collectMembersJob = collectMembersJob;
@@ -51,6 +53,7 @@ public class BatchApplicationService implements BatchTriggerUseCase {
         this.collectAssetsJob = collectAssetsJob;
         this.collectGovernorsJob = collectGovernorsJob;
         this.collectGovernorPledgesJob = collectGovernorPledgesJob;
+        this.wikidataGovernorPhotoJob = wikidataGovernorPhotoJob;
         this.votePort = votePort;
     }
 
@@ -168,6 +171,11 @@ public class BatchApplicationService implements BatchTriggerUseCase {
             log.error("collectGovernorPledgesJob 실행 실패", e);
             throw new RuntimeException("배치 실행 실패: collectGovernorPledgesJob - " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public BatchResult runGovernorPhotos() {
+        return run(wikidataGovernorPhotoJob, "wikidataGovernorPhotoJob");
     }
 
     private BatchResult run(Job job, String jobName) {

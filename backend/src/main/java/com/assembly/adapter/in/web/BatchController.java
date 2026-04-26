@@ -70,6 +70,11 @@ public class BatchController {
         return ResponseEntity.ok(batchTriggerUseCase.runGovernors(sgId));
     }
 
+    @PostMapping("/governor-photos")
+    public ResponseEntity<BatchResult> runGovernorPhotosJob() {
+        return ResponseEntity.ok(batchTriggerUseCase.runGovernorPhotos());
+    }
+
     @PostMapping("/governor-pledges")
     public ResponseEntity<BatchResult> runGovernorPledgesJob(
             @RequestParam(defaultValue = "20220601") String sgId) {

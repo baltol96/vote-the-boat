@@ -16,6 +16,11 @@ public class LocalGovernorPersistenceAdapter implements LocalGovernorPort {
     private final LocalGovernorJpaRepository repository;
 
     @Override
+    public List<LocalGovernor> findAll() {
+        return repository.findAll();
+    }
+
+    @Override
     public Optional<LocalGovernor> findByHuboid(String huboid) {
         return repository.findByHuboid(huboid);
     }

@@ -16,4 +16,5 @@ public interface BatchTriggerUseCase {
     BatchResult runAssets(String pdfPath, int declareYear);
     BatchResult runGovernors(String sgId);
     BatchResult runGovernorPledges(String sgId);
+    BatchResult runGovernorPhotos();
 }

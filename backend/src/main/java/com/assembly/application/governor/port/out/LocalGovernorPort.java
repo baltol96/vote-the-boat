@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LocalGovernorPort {
+    List<LocalGovernor> findAll();
     Optional<LocalGovernor> findByHuboid(String huboid);
     List<LocalGovernor> findBySgId(String sgId);
     List<LocalGovernor> findByGovernorType(GovernorType governorType);

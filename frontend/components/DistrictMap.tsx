@@ -113,6 +113,9 @@ export default function DistrictMap({
         initSidoLayer(L, sidoGeoJson);
         setIsLoading(false);
 
+        // 탭 전환 시 패널 닫힘 애니메이션(280ms) 후 컨테이너 크기가 확정되므로 재계산
+        setTimeout(() => { if (!cancelled) map.invalidateSize(); }, 350);
+
         // 백그라운드 프리패치 (훅의 distCacheRef에 저장)
         prefetchDistricts([
           'seoul','gyeonggi','busan','incheon','daegu','daejeon',
