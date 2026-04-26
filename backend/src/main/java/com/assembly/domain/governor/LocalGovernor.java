@@ -74,6 +74,9 @@ public class LocalGovernor {
     @Column(length = 20)
     private String dugyul;
 
+    @Column(length = 500)
+    private String photoUrl;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -112,6 +115,10 @@ public class LocalGovernor {
         this.career2 = career2;
         this.dugsu = dugsu;
         this.dugyul = dugyul;
+    }
+
+    public void updatePhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 
     public void update(String name, String jdName, String addr, String job,

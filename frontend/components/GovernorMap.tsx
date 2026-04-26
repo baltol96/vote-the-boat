@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Map as LeafletMap, GeoJSON as LeafletGeoJSON, LatLngBounds, Layer } from 'leaflet';
 import { GovernorResponse, governorApi } from '@/lib/api';
 import { getPartyColor } from '@/lib/constants';
+import { MapSelect } from '@/components/MapSelect';
 
 export const SIDO_TO_SDNAME: Record<string, string> = {
   '서울': '서울특별시',
@@ -48,11 +49,12 @@ const SDNAME_TO_SIGUNGU_FILE: Record<string, string> = {
 interface GovernorMapProps {
   onSidoClick: (sdName: string) => void;
   onSigunguClick?: (huboid: string) => void;
+  onReset?: () => void;
   selectedSdName?: string;
   isPanelOpen?: boolean;
 }
 
-export default function GovernorMap({ onSidoClick, onSigunguClick, selectedSdName, isPanelOpen }: GovernorMapProps) {
+export default function GovernorMap({ onSidoClick, onSigunguClick, onReset, selectedSdName, isPanelOpen }: GovernorMapProps) {
   const mapContainerRef    = useRef<HTMLDivElement>(null);
   const mapRef             = useRef<LeafletMap | null>(null);
   const geoLayerRef        = useRef<LeafletGeoJSON | null>(null);
@@ -68,9 +70,21 @@ export default function GovernorMap({ onSidoClick, onSigunguClick, selectedSdNam
   useEffect(() => { onSigunguClickRef.current = onSigunguClick; }, [onSigunguClick]);
   useEffect(() => { selectedSdNameRef.current = selectedSdName; }, [selectedSdName]);
 
-  const [isLoading, setIsLoading]     = useState(true);
-  const [error, setError]             = useState<string | null>(null);
-  const [hoveredSido, setHoveredSido] = useState<string | null>(null);
+  const [isLoading, setIsLoading]           = useState(true);
+  const [error, setError]                   = useState<string | null>(null);
+  const [hoveredSido, setHoveredSido]       = useState<string | null>(null);
+  const [sidoOptions, setSidoOptions]       = useState<{ label: string; value: string }[]>([]);
+  const [sigunguOptions, setSigunguOptions] = useState<{ label: string; value: string }[]>([]);
+  const [selectSido, setSelectSido]         = useState('');
+  const [selectSigungu, setSelectSigungu]   = useState('');
+  const [sigunguLoading, setSigunguLoading] = useState(false);
+
+  // 셀렉트박스 — selectedSdName 변경 시 동기화
+  useEffect(() => {
+    setSelectSido(selectedSdName ?? '');
+    setSelectSigungu('');
+    setSigunguOptions([]);
+  }, [selectedSdName]);
 
   // 패널 열림에 따른 지도 패닝
   const prevPanelOpenRef = useRef(false);
@@ -101,8 +115,12 @@ export default function GovernorMap({ onSidoClick, onSigunguClick, selectedSdNam
         const sdName = SIDO_TO_SDNAME[sido];
         if (sdName !== selectedSdName) {
           fl.setStyle({ opacity: 0, fillOpacity: 0 });
+          const el = fl.getElement?.() as HTMLElement | undefined;
+          if (el) el.style.pointerEvents = 'none';
         } else {
           fl.setStyle({ opacity: 0.8, fillOpacity: 0.70, fillColor: getPartyColor(bySdNameRef.current.get(sdName)?.party), color: '#fff', weight: 2 });
+          const el = fl.getElement?.() as HTMLElement | undefined;
+          if (el) el.style.pointerEvents = '';
         }
       });
       const bounds = sidoBoundsRef.current.get(selectedSdName);
@@ -115,6 +133,8 @@ export default function GovernorMap({ onSidoClick, onSigunguClick, selectedSdNam
         const sdName = SIDO_TO_SDNAME[sido];
         const gov    = sdName ? bySdNameRef.current.get(sdName) : undefined;
         fl.setStyle({ fillColor: getPartyColor(gov?.party), fillOpacity: 0.38, color: '#fff', weight: 1.5, opacity: 0.8 });
+        const el = fl.getElement?.() as HTMLElement | undefined;
+        if (el) el.style.pointerEvents = '';
       });
       map.setView([36.3, 127.8], 7, { animate: true });
     }
@@ -135,6 +155,7 @@ export default function GovernorMap({ onSidoClick, onSigunguClick, selectedSdNam
     if (!file) return;
 
     let cancelled = false;
+    setSigunguLoading(true);
     (async () => {
       try {
         const [sigunguGeo, distGovs] = await Promise.all([
@@ -142,6 +163,9 @@ export default function GovernorMap({ onSidoClick, onSigunguClick, selectedSdNam
           governorApi.getDistrictGovernors(selectedSdName),
         ]);
         if (cancelled || !mapRef.current) return;
+
+        setSigunguOptions(distGovs.filter(g => g.sggName).map(g => ({ label: g.sggName!, value: g.huboid })));
+        setSigunguLoading(false);
 
         const govByNm = new Map<string, GovernorResponse>();
         for (const g of distGovs) { if (g.sggName) govByNm.set(g.sggName, g); }
@@ -184,10 +208,21 @@ export default function GovernorMap({ onSidoClick, onSigunguClick, selectedSdNam
         }).addTo(mapRef.current!);
 
         sigunguLayerRef.current = layer;
-      } catch { /* 시군구 로드 실패 시 무시 */ }
+
+        // 시도 폴리곤 숨김 — 시군구 레이어와 테두리가 겹쳐 이중선이 발생하므로
+        geoLayerRef.current?.eachLayer((l: any) => {
+          const sdName = SIDO_TO_SDNAME[l.feature?.properties?.sido as string];
+          if (sdName === selectedSdName) l.setStyle({ opacity: 0, fillOpacity: 0 });
+        });
+      } catch {
+        if (!cancelled) setSigunguLoading(false);
+      }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      setSigunguLoading(false);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSdName]);
 
@@ -230,6 +265,7 @@ export default function GovernorMap({ onSidoClick, onSigunguClick, selectedSdNam
         for (const g of governors) {
           if (g.sdName) bySdNameRef.current.set(g.sdName, g);
         }
+        setSidoOptions(Object.entries(SIDO_TO_SDNAME).map(([sido, sdName]) => ({ label: sido, value: sdName })));
         const byName = bySdNameRef.current;
 
         const getStyle = (sdName: string | undefined, isSelected: boolean, isHovered: boolean) => {
@@ -267,21 +303,18 @@ export default function GovernorMap({ onSidoClick, onSigunguClick, selectedSdNam
 
             featureLayer.on({
               mouseover: (e) => {
+                if (selectedSdNameRef.current) return;
                 setHoveredSido(sido);
                 (featureLayer as any).setTooltipContent(getTooltipContent());
-                if (!selectedSdNameRef.current) {
-                  (e.target as any).setStyle(getStyle(sdName, false, true));
-                  (e.target as any).bringToFront();
-                }
+                (e.target as any).setStyle(getStyle(sdName, false, true));
               },
               mouseout: () => {
+                if (selectedSdNameRef.current) return;
                 setHoveredSido(null);
-                if (!selectedSdNameRef.current) {
-                  (featureLayer as any).setStyle(getStyle(sdName, false, false));
-                }
+                (featureLayer as any).setStyle(getStyle(sdName, false, false));
               },
               click: () => {
-                if (sdName) onSidoClickRef.current(sdName);
+                if (sdName && !selectedSdNameRef.current) onSidoClickRef.current(sdName);
               },
             });
 
@@ -329,6 +362,49 @@ export default function GovernorMap({ onSidoClick, onSigunguClick, selectedSdNam
 
   return (
     <div className="relative w-full h-full">
+      {!isLoading && (
+        <div
+          className="absolute top-3 left-1/2 -translate-x-1/2 z-[1001] flex items-center gap-1.5"
+          style={{ pointerEvents: 'auto' }}
+        >
+          <button
+            onClick={selectedSdName ? () => onReset?.() : undefined}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-jakarta font-medium text-xs transition-all whitespace-nowrap"
+            style={{
+              background: 'rgba(244,247,251,0.92)',
+              border: '1px solid rgba(13,110,105,0.25)',
+              backdropFilter: 'blur(8px)',
+              color: '#0d6e69',
+              boxShadow: '0 2px 8px rgba(13,110,105,0.1)',
+              cursor: selectedSdName ? 'pointer' : 'default',
+              opacity: !selectedSdName ? 0.65 : 1,
+            }}
+          >
+            {selectedSdName && (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M15 18l-6-6 6-6"/>
+              </svg>
+            )}
+            전체 지도
+          </button>
+
+          <MapSelect
+            value={selectSido}
+            onChange={(val) => { if (val) onSidoClick(val); else onReset?.(); }}
+            placeholder="시/도 선택"
+            options={sidoOptions}
+          />
+
+          <MapSelect
+            value={selectSigungu}
+            onChange={(val) => { setSelectSigungu(val); if (val) onSigunguClick?.(val); }}
+            placeholder="시/군/구 선택"
+            options={sigunguOptions}
+            disabled={!selectSido}
+            loading={sigunguLoading}
+          />
+        </div>
+      )}
       {isLoading && (
         <div className="absolute inset-0 z-10 flex items-center justify-center"
              style={{ background: 'var(--color-map-bg)' }}>

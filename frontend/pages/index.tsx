@@ -3,11 +3,14 @@ import { useEffect, useReducer, useState, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import MemberPanel from '@/components/MemberPanel';
+import GovernorPanel from '@/components/GovernorPanel';
+import GovernorSplitPanel from '@/components/GovernorSplitPanel';
 import { districtApi, memberApi, MemberResponse } from '@/lib/api';
 import { getPartyColor } from '@/lib/constants';
 import type { MapViewMode } from '@/components/DistrictMap';
 
 const DistrictMap = dynamic(() => import('@/components/DistrictMap'), { ssr: false });
+const GovernorMap  = dynamic(() => import('@/components/GovernorMap'),  { ssr: false });
 
 const SEP = 'rgba(100,135,165,0.4)';
 
@@ -78,9 +81,14 @@ export default function Home() {
   const [panel, dispatch] = useReducer(panelReducer, { status: 'idle' });
 
   // ── 독립 상태 ─────────────────────────────────────────────────
+  const [mapMode, setMapMode]         = useState<'member' | 'governor'>('member');
   const [mapViewMode, setMapViewMode] = useState<MapViewMode>('sido');
   const [isMobile, setIsMobile]       = useState(false);
   const [toast, setToast]             = useState<string | null>(null);
+
+  // ── 지자체장 패널 상태 ────────────────────────────────────────
+  const [govSdName,  setGovSdName]  = useState<string | null>(null);
+  const [govHuboid,  setGovHuboid]  = useState<string | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
@@ -183,6 +191,38 @@ export default function Home() {
 
   const handleClose = () => dispatch({ type: 'CLOSE' });
 
+  // ── 지도 모드 전환 ────────────────────────────────────────────
+  const handleModeChange = (mode: 'member' | 'governor') => {
+    setMapMode(mode);
+    dispatch({ type: 'CLOSE' });
+    setGovSdName(null);
+    setGovHuboid(null);
+    setSheetHeight(SNAP_DEFAULT);
+  };
+
+  // ── 지자체장 이벤트 핸들러 ────────────────────────────────────
+  const handleSidoClick = (sdName: string) => {
+    setGovSdName(sdName);
+    setGovHuboid(null);
+    setSheetHeight(SNAP_DEFAULT);
+  };
+  const handleGovernorSelect = (huboid: string) => {
+    setGovHuboid(huboid);
+    setSheetHeight(SNAP_DEFAULT);
+  };
+  const handleGovClose = () => {
+    if (govHuboid && govSdName) {
+      setGovHuboid(null);
+    } else {
+      setGovSdName(null);
+      setGovHuboid(null);
+    }
+  };
+  const handleGovReset = () => {
+    setGovSdName(null);
+    setGovHuboid(null);
+  };
+
   // ── 파생 값 ──────────────────────────────────────────────────
   const isPanelOpen     = panel.status === 'open';
   const isLoadingMember = panel.status === 'loading';
@@ -193,7 +233,13 @@ export default function Home() {
   const selectedSggCode = panel.status !== 'idle' ? panel.sggCode || undefined : undefined;
   const selectedMonaCd  = panel.status === 'open' ? panel.monaCd : undefined;
   const selectedPartyColor = panel.status === 'open' ? panel.partyColor : undefined;
-  const showDropdown = searchFocused && searchQuery.trim().length > 0;
+  const showDropdown    = searchFocused && searchQuery.trim().length > 0;
+  const isGovPanelOpen  = !!govSdName || !!govHuboid;
+  const govPanelContent = govHuboid
+    ? <GovernorPanel huboid={govHuboid} onClose={handleGovClose} />
+    : govSdName
+      ? <GovernorSplitPanel sdName={govSdName} onGovernorSelect={handleGovernorSelect} onClose={handleGovClose} />
+      : null;
 
   return (
     <>
@@ -243,52 +289,6 @@ export default function Home() {
               </span>
             </div>
           </div>
-
-          <div className="h-5 w-px shrink-0" style={{ background: SEP }} />
-
-          {/* 페이지 탭 */}
-          <nav className="flex items-center gap-0.5 shrink-0">
-            <span
-              className="flex items-center gap-1.5 px-3 h-7 rounded-lg font-jakarta text-xs font-semibold transition-colors"
-              style={{
-                background: 'var(--color-primary-container)',
-                color: 'var(--color-primary-fixed)',
-              }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-              </svg>
-              지도
-            </span>
-            <Link
-              href="/members"
-              className="flex items-center gap-1.5 px-3 h-7 rounded-lg font-jakarta text-xs font-medium transition-colors hover:opacity-80"
-              style={{
-                color: 'var(--color-on-surface)',
-                opacity: 0.55,
-              }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-              전체 의원
-            </Link>
-            <Link
-              href="/governors"
-              className="flex items-center gap-1.5 px-3 h-7 rounded-lg font-jakarta text-xs font-medium transition-colors hover:opacity-80"
-              style={{
-                color: 'var(--color-on-surface)',
-                opacity: 0.55,
-              }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
-              지자체장
-            </Link>
-          </nav>
-
-          <div className="h-5 w-px shrink-0" style={{ background: SEP }} />
 
           {/* 검색바 */}
           <div ref={searchRef} className="relative w-64">
@@ -399,6 +399,20 @@ export default function Home() {
             )}
           </div>
 
+          {/* 전체 의원 링크 */}
+          {mapMode === 'member' && <Link
+            href="/members"
+            className="flex items-center gap-1.5 px-2.5 h-8 rounded-lg font-jakarta text-xs font-medium shrink-0 transition-opacity hover:opacity-70"
+            style={{ color: 'var(--color-on-surface)', opacity: 0.55, border: `1px solid ${SEP}` }}
+            title="전체 의원 목록"
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span className="hidden sm:inline">전체 의원</span>
+          </Link>}
+
           {/* 통계 뱃지 */}
           <div
             className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full shrink-0 font-jakarta"
@@ -421,19 +435,61 @@ export default function Home() {
 
           {/* 지도 영역 */}
           <div className="map-ocean-wrap flex-1 relative overflow-hidden">
-            <DistrictMap
-              onDistrictSelect={handleDistrictSelect}
-              selectedSggCode={selectedSggCode}
-              selectedPartyColor={selectedPartyColor}
-              onViewModeChange={(mode) => {
-                setMapViewMode(mode);
-                if (mode === 'sido') dispatch({ type: 'MAP_RESET' });
-              }}
-              isPanelOpen={isPanelVisible}
-            />
 
-            {/* 지도 로딩 오버레이 */}
-            {isLoadingMember && (
+            {/* 지도 모드 토글 */}
+            <div
+              className="absolute top-3 left-3 z-[1000] flex items-center p-0.5 rounded-lg"
+              style={{
+                background: 'rgba(244,247,251,0.92)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                border: `1px solid ${SEP}`,
+                boxShadow: '0 2px 8px rgba(13,110,105,0.08)',
+              }}
+            >
+              <button
+                onClick={() => handleModeChange('member')}
+                className="px-3 h-7 rounded-md font-jakarta text-xs font-semibold transition-all"
+                style={mapMode === 'member'
+                  ? { background: 'var(--color-primary)', color: '#fff' }
+                  : { color: 'var(--color-on-surface)', opacity: 0.5 }}
+              >
+                국회의원
+              </button>
+              <button
+                onClick={() => handleModeChange('governor')}
+                className="px-3 h-7 rounded-md font-jakarta text-xs font-semibold transition-all"
+                style={mapMode === 'governor'
+                  ? { background: 'var(--color-primary)', color: '#fff' }
+                  : { color: 'var(--color-on-surface)', opacity: 0.5 }}
+              >
+                지자체장
+              </button>
+            </div>
+
+            {mapMode === 'member' ? (
+              <DistrictMap
+                onDistrictSelect={handleDistrictSelect}
+                selectedSggCode={selectedSggCode}
+                selectedPartyColor={selectedPartyColor}
+                onViewModeChange={(mode) => {
+                  setMapViewMode(mode);
+                  if (mode === 'sido') dispatch({ type: 'MAP_RESET' });
+                }}
+                isPanelOpen={isPanelVisible}
+              />
+            ) : (
+              <GovernorMap
+                onSidoClick={handleSidoClick}
+                onSigunguClick={handleGovernorSelect}
+                onReset={handleGovReset}
+                selectedSdName={govSdName ?? undefined}
+                isPanelOpen={!isMobile && isGovPanelOpen}
+              />
+            )}
+
+            {/* 지도 로딩 오버레이 (국회의원 모드) */}
+            {mapMode === 'member' && isLoadingMember && (
               <div
                 className="absolute inset-0 z-20 flex items-center justify-center"
                 style={{ background: 'rgba(244,247,251,0.55)', backdropFilter: 'blur(4px)' }}
@@ -451,7 +507,7 @@ export default function Home() {
             )}
 
             {/* 하단 힌트 */}
-            {!isPanelVisible && (
+            {((mapMode === 'member' && !isPanelVisible) || (mapMode === 'governor' && !isGovPanelOpen)) && (
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1001] pointer-events-none">
                 <div
                   className="flex items-center gap-2 px-4 py-2 rounded-full font-jakarta font-medium whitespace-nowrap"
@@ -466,9 +522,11 @@ export default function Home() {
                   }}
                 >
                   <span style={{ color: 'var(--color-primary)' }}><PinIcon /></span>
-                  {mapViewMode === 'sido'
-                    ? '시/도를 클릭하면 선거구를 확인할 수 있습니다'
-                    : '선거구를 클릭하면 의원 정보를 확인할 수 있습니다'}
+                  {mapMode === 'governor'
+                    ? '시/도를 클릭하면 지자체장 정보를 확인할 수 있습니다'
+                    : mapViewMode === 'sido'
+                      ? '시/도를 클릭하면 선거구를 확인할 수 있습니다'
+                      : '선거구를 클릭하면 의원 정보를 확인할 수 있습니다'}
                 </div>
               </div>
             )}
@@ -479,13 +537,15 @@ export default function Home() {
             <aside
               className="member-panel shrink-0 overflow-hidden flex flex-col"
               style={{
-                width: isPanelVisible ? '440px' : '0px',
+                width: (mapMode === 'member' ? isPanelVisible : isGovPanelOpen) ? '440px' : '0px',
                 transition: 'width 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
-                borderLeft: `1px solid ${isPanelVisible ? SEP : 'transparent'}`,
+                borderLeft: `1px solid ${(mapMode === 'member' ? isPanelVisible : isGovPanelOpen) ? SEP : 'transparent'}`,
                 background: 'var(--color-surface-low)',
               }}
             >
-              {isPanelOpen && selectedMonaCd ? (
+              {mapMode === 'governor' ? (
+                govPanelContent
+              ) : isPanelOpen && selectedMonaCd ? (
                 <MemberPanel
                   monaCd={selectedMonaCd}
                   sggCode={selectedSggCode}
@@ -516,8 +576,34 @@ export default function Home() {
           )}
         </div>
 
+        {/* ── 바텀 시트 (모바일, 지자체장) ── */}
+        {isMobile && mapMode === 'governor' && isGovPanelOpen && (
+          <div
+            className="fixed inset-x-0 bottom-0 z-[1600] flex flex-col overflow-hidden"
+            style={{
+              height: `${sheetHeight}vh`,
+              borderRadius: '20px 20px 0 0',
+              background: 'var(--color-surface-low)',
+              borderTop: `1px solid ${SEP}`,
+              boxShadow: '0 -8px 32px rgba(13,110,105,0.12)',
+              transition: isDragging.current ? 'none' : 'height 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            <div
+              className="flex justify-center items-center shrink-0 cursor-grab active:cursor-grabbing touch-none"
+              style={{ paddingTop: '14px', paddingBottom: '14px' }}
+              onTouchStart={handleDragStart}
+              onTouchMove={handleDragMove}
+              onTouchEnd={handleDragEnd}
+            >
+              <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(100,135,165,0.4)' }} />
+            </div>
+            <div className="overflow-y-auto flex-1">{govPanelContent}</div>
+          </div>
+        )}
+
         {/* ── 바텀 시트 (모바일) ── */}
-        {isMobile && selectedMonaCd && (
+        {isMobile && mapMode === 'member' && selectedMonaCd && (
           <>
             {isPanelOpen && (
               <div
