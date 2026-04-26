@@ -363,7 +363,7 @@ export default function GovernorMap({ onSidoClick, onSigunguClick, onReset, sele
     <div className="relative w-full h-full">
       {!isLoading && (
         <div
-          className="absolute top-3 left-1/2 -translate-x-1/2 z-[1001] flex items-center gap-1.5"
+          className="absolute top-12 sm:top-3 left-1/2 -translate-x-1/2 z-[1001] flex items-center gap-1.5"
           style={{ pointerEvents: 'auto' }}
         >
           <button

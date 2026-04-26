@@ -293,7 +293,7 @@ export default function Home() {
           {/* 검색바 */}
           <div ref={searchRef} className="relative w-64">
             <div
-              className="flex items-center gap-2 px-3 h-8 rounded-lg transition-all duration-200"
+              className="flex items-center gap-2 px-3 h-10 rounded-lg transition-all duration-200"
               style={{
                 background: 'rgba(220,228,238,0.8)',
                 border: `1px solid ${searchFocused ? 'rgba(13,110,105,0.4)' : 'rgba(100,135,165,0.4)'}`,
@@ -402,7 +402,7 @@ export default function Home() {
           {/* 전체 의원 링크 */}
           {mapMode === 'member' && <Link
             href="/members"
-            className="flex items-center gap-1.5 px-2.5 h-8 rounded-lg font-jakarta text-xs font-medium shrink-0 transition-opacity hover:opacity-70"
+            className="flex items-center gap-1.5 px-2.5 h-10 rounded-lg font-jakarta text-xs font-medium shrink-0 transition-opacity hover:opacity-70"
             style={{ color: 'var(--color-on-surface)', opacity: 0.55, border: `1px solid ${SEP}` }}
             title="전체 의원 목록"
           >
@@ -449,7 +449,7 @@ export default function Home() {
             >
               <button
                 onClick={() => handleModeChange('member')}
-                className="px-3 h-7 rounded-md font-jakarta text-xs font-semibold transition-all"
+                className="px-3 h-7 min-h-[44px] sm:min-h-0 sm:h-7 rounded-md font-jakarta text-xs font-semibold transition-all"
                 style={mapMode === 'member'
                   ? { background: 'var(--color-primary)', color: '#fff' }
                   : { color: 'var(--color-on-surface)', opacity: 0.5 }}
@@ -458,7 +458,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => handleModeChange('governor')}
-                className="px-3 h-7 rounded-md font-jakarta text-xs font-semibold transition-all"
+                className="px-3 h-7 min-h-[44px] sm:min-h-0 sm:h-7 rounded-md font-jakarta text-xs font-semibold transition-all"
                 style={mapMode === 'governor'
                   ? { background: 'var(--color-primary)', color: '#fff' }
                   : { color: 'var(--color-on-surface)', opacity: 0.5 }}
