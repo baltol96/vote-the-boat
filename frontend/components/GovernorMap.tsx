@@ -417,6 +417,29 @@ export default function GovernorMap({ onSidoClick, onSigunguClick, onReset, sele
           <p className="font-jakarta text-sm" style={{ color: '#ff8a80' }}>{error}</p>
         </div>
       )}
+      {/* Party color legend */}
+      <div
+        className="absolute bottom-8 left-3 z-[1000] flex flex-col gap-1 px-2.5 py-2 rounded-lg pointer-events-none"
+        style={{
+          background: 'rgba(244,247,251,0.92)',
+          border: '1px solid rgba(13,110,105,0.25)',
+          backdropFilter: 'blur(8px)',
+          boxShadow: '0 2px 8px rgba(13,110,105,0.08)',
+        }}
+      >
+        {([
+          ['더불어민주당', getPartyColor('더불어민주당')],
+          ['국민의힘',     getPartyColor('국민의힘')],
+          ['조국혁신당',   getPartyColor('조국혁신당')],
+          ['개혁신당',     getPartyColor('개혁신당')],
+          ['기타',         '#4a5568'],
+        ] as [string, string][]).map(([label, color]) => (
+          <div key={label} className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+            <span className="font-jakarta text-on-surface/70" style={{ fontSize: '0.6rem' }}>{label}</span>
+          </div>
+        ))}
+      </div>
       <div ref={mapContainerRef} className="w-full h-full" style={{ background: 'var(--color-map-bg)' }} />
     </div>
   );
