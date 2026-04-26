@@ -38,42 +38,88 @@ const TABS: { key: TabKey; label: string }[] = [
 // ── 기본정보 탭 ───────────────────────────────────────────────────────────────
 
 function InfoTab({ member }: { member: MemberResponse }) {
-  return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-3">
-        {[
-          { label: '이메일',     value: member.email },
-          { label: '전화',       value: member.phone },
-          { label: '사무실',     value: member.officeRoom },
-          { label: '성별',       value: member.gender },
-          { label: '생년월일',   value: member.birthDate },
-          { label: '이름(한자)', value: member.nameHan },
-          { label: '본관',       value: member.bon },
-          { label: '출생지',     value: member.posi },
-        ]
-          .filter(({ value }) => value)
-          .map(({ label, value }) => (
-            <div key={label} className="flex gap-3">
-              <span className="font-jakarta text-xs text-on-surface/40 w-20 shrink-0 pt-0.5">{label}</span>
-              <span className="font-jakarta text-xs text-on-surface/80 break-all">{value}</span>
-            </div>
-          ))}
-      </div>
+  const alwaysRows = [
+    { label: '지역구',     value: member.district || member.electionType },
+    { label: '시/도',      value: member.sido },
+    { label: '선출방식',   value: member.electionType },
+    { label: '선수',       value: member.termCount ? `${member.termCount}선` : undefined },
+  ].filter(({ value }) => value);
 
-      {[
-        { label: '학력·경력', value: member.hak },
-        { label: '종교·취미', value: member.hobby },
-        { label: '저서',      value: member.book },
-        { label: '상훈',      value: member.sang },
-        { label: '기타',      value: member.dead },
-      ]
-        .filter(({ value }) => value)
-        .map(({ label, value }) => (
-          <div key={label} className="rounded-xl p-4 bg-surface-high" style={{ border: SEP }}>
-            <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-2">{label}</p>
-            <p className="font-jakarta text-xs text-on-surface/80 leading-relaxed whitespace-pre-line">{value}</p>
+  const contactRows = [
+    { label: '이메일',   value: member.email },
+    { label: '전화',     value: member.phone },
+    { label: '사무실',   value: member.officeRoom },
+  ].filter(({ value }) => value);
+
+  const personalRows = [
+    { label: '성별',       value: member.gender },
+    { label: '생년월일',   value: member.birthDate },
+    { label: '이름(한자)', value: member.nameHan },
+    { label: '본관',       value: member.bon },
+    { label: '출생지',     value: member.posi },
+  ].filter(({ value }) => value);
+
+  const bioCards = [
+    { label: '학력·경력', value: member.hak },
+    { label: '종교·취미', value: member.hobby },
+    { label: '저서',      value: member.book },
+    { label: '상훈',      value: member.sang },
+    { label: '기타',      value: member.dead },
+  ].filter(({ value }) => value);
+
+  const hasExtra = contactRows.length > 0 || personalRows.length > 0 || bioCards.length > 0 || !!member.heritageUrl;
+
+  function RowGroup({ rows }: { rows: { label: string; value?: string }[] }) {
+    return (
+      <div className="flex flex-col gap-3">
+        {rows.map(({ label, value }) => (
+          <div key={label} className="flex gap-3">
+            <span className="font-jakarta text-xs text-on-surface/40 w-20 shrink-0 pt-0.5">{label}</span>
+            <span className="font-jakarta text-xs text-on-surface/80 break-all">{value}</span>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* 항상 표시되는 기본 정보 */}
+      <div className="rounded-xl p-4 bg-surface-high" style={{ border: SEP }}>
+        <p className="font-jakarta text-[11px] font-semibold text-on-surface/40 uppercase tracking-widest mb-3">기본사항</p>
+        <RowGroup rows={alwaysRows} />
+      </div>
+
+      {/* 연락처 */}
+      {contactRows.length > 0 && (
+        <div className="rounded-xl p-4 bg-surface-high" style={{ border: SEP }}>
+          <p className="font-jakarta text-[11px] font-semibold text-on-surface/40 uppercase tracking-widest mb-3">연락처</p>
+          <RowGroup rows={contactRows} />
+        </div>
+      )}
+
+      {/* 개인 정보 */}
+      {personalRows.length > 0 && (
+        <div className="rounded-xl p-4 bg-surface-high" style={{ border: SEP }}>
+          <p className="font-jakarta text-[11px] font-semibold text-on-surface/40 uppercase tracking-widest mb-3">인적사항</p>
+          <RowGroup rows={personalRows} />
+        </div>
+      )}
+
+      {/* 경력·취미·저서 등 */}
+      {bioCards.map(({ label, value }) => (
+        <div key={label} className="rounded-xl p-4 bg-surface-high" style={{ border: SEP }}>
+          <p className="font-jakarta text-xs font-medium text-on-surface/50 mb-2">{label}</p>
+          <p className="font-jakarta text-xs text-on-surface/80 leading-relaxed whitespace-pre-line">{value}</p>
+        </div>
+      ))}
+
+      {/* 추가 정보 없을 때 안내 */}
+      {!hasExtra && (
+        <p className="font-jakarta text-xs text-on-surface/35 text-center py-4">
+          추가 등록된 정보가 없습니다
+        </p>
+      )}
 
       {member.heritageUrl && (
         <a
