@@ -16,6 +16,9 @@ function getColors() {
     hoverBorder:    '#0a5550',
     selected:       '#0a5550',
     selectedBorder: '#0d6e69',
+    vacant:         '#b0b8c1',
+    vacantBorder:   '#8a9099',
+    vacantOpacity:  0.7,
   };
 }
 
@@ -64,6 +67,7 @@ export function useMapLayers({
   const distCacheRef         = useRef<Map<string, any>>(new Map());
   const viewModeRef          = useRef<MapViewMode>('sido');
   const partyMapRef          = useRef<Map<string, string>>(new Map());
+  const vacantSetRef         = useRef<Set<string>>(new Set());
 
   // ── 뷰 상태 ───────────────────────────────────────────────────
   const [viewMode, setViewMode]             = useState<MapViewMode>('sido');
@@ -93,6 +97,9 @@ export function useMapLayers({
     if (pc) {
       return { fillColor: pc, fillOpacity: 0.28, color: c.idleBorder, weight: 1.2, cursor: 'pointer' };
     }
+    if (sgg && vacantSetRef.current.has(sgg)) {
+      return { fillColor: c.vacant, fillOpacity: c.vacantOpacity, color: c.vacantBorder, weight: 1.2, cursor: 'pointer' };
+    }
     return getIdleStyle(false);
   };
 
@@ -105,6 +112,8 @@ export function useMapLayers({
       const pc = sgg ? partyMapRef.current.get(sgg) : undefined;
       if (pc) {
         layer.setStyle({ fillColor: pc, fillOpacity: 0.62, color: pc, weight: 1.8 });
+      } else if (sgg && vacantSetRef.current.has(sgg)) {
+        layer.setStyle({ fillColor: c.vacant, fillOpacity: 0.9, color: c.vacantBorder, weight: 1.8 });
       } else {
         layer.setStyle({ fillColor: c.hover, fillOpacity: 1, color: c.hoverBorder, weight: 1.8 });
       }
@@ -118,6 +127,7 @@ export function useMapLayers({
     const sgg = layer.feature?.properties?.SGG_Code;
     const isSel = !isSido && sgg && sgg === selectedRef.current;
     const pc = !isSido && sgg ? partyMapRef.current.get(sgg) : undefined;
+    const isVacant = !isSido && sgg && vacantSetRef.current.has(sgg);
 
     if (isSel) {
       layer.setStyle({
@@ -128,6 +138,8 @@ export function useMapLayers({
       });
     } else if (pc) {
       layer.setStyle({ fillColor: pc, fillOpacity: 0.28, color: c.idleBorder, weight: 1.2 });
+    } else if (isVacant) {
+      layer.setStyle({ fillColor: c.vacant, fillOpacity: c.vacantOpacity, color: c.vacantBorder, weight: 1.2 });
     } else {
       layer.setStyle({
         fillColor: c.idle, fillOpacity: c.idleOpacity,
@@ -243,6 +255,13 @@ export function useMapLayers({
       }
       partyMapRef.current = pm;
 
+      const vs = new Set<string>();
+      layer.eachLayer((lyr: any) => {
+        const sgg = lyr.feature?.properties?.SGG_Code;
+        if (sgg && !pm.has(sgg)) vs.add(sgg);
+      });
+      vacantSetRef.current = vs;
+
       const c = getColors();
       layer.eachLayer((lyr: any) => {
         const sgg = lyr.feature?.properties?.SGG_Code;
@@ -253,6 +272,8 @@ export function useMapLayers({
           lyr.setStyle({ fillColor: selectedPartyColorRef.current ?? pc ?? c.selected, fillOpacity: 0.88, color: c.selectedBorder, weight: 1.8 });
         } else if (pc) {
           lyr.setStyle({ fillColor: pc, fillOpacity: 0.28, color: c.idleBorder, weight: 1.2 });
+        } else if (vs.has(sgg)) {
+          lyr.setStyle({ fillColor: c.vacant, fillOpacity: c.vacantOpacity, color: c.vacantBorder, weight: 1.2 });
         }
       });
     }).catch(() => {});
@@ -270,6 +291,7 @@ export function useMapLayers({
     layerMapRef.current.clear();
     prevSelectedRef.current = null;
     partyMapRef.current = new Map();
+    vacantSetRef.current = new Set();
 
     const geoJson = sidoGeoJsonRef.current;
     if (!geoJson) return;
@@ -362,10 +384,13 @@ export function useMapLayers({
     if (prevSelectedRef.current) {
       const sgg = prevSelectedRef.current.feature?.properties?.SGG_Code;
       const pc = sgg ? partyMapRef.current.get(sgg) : undefined;
+      const isVacant = sgg && vacantSetRef.current.has(sgg);
       prevSelectedRef.current.setStyle(
         pc
           ? { fillColor: pc, fillOpacity: 0.28, color: c.idleBorder, weight: 1.2 }
-          : { fillColor: c.idle, fillOpacity: c.idleOpacity, color: c.idleBorder, weight: 1.2 },
+          : isVacant
+            ? { fillColor: c.vacant, fillOpacity: c.vacantOpacity, color: c.vacantBorder, weight: 1.2 }
+            : { fillColor: c.idle, fillOpacity: c.idleOpacity, color: c.idleBorder, weight: 1.2 },
       );
     }
 

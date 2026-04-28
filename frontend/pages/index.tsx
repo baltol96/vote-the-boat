@@ -177,9 +177,11 @@ export default function Home() {
     try {
       const member = await districtApi.getMemberBySggCode(sggCode);
       dispatch({ type: 'MEMBER_LOADED', monaCd: member.monaCd, partyColor: getPartyColor(member.party) });
-    } catch {
-      dispatch({ type: 'LOAD_ERROR', message: '해당 선거구 의원 정보를 찾을 수 없습니다.' });
-      showToast('해당 선거구 의원 정보를 찾을 수 없습니다.');
+    } catch (err: unknown) {
+      const is404 = (err as { response?: { status?: number } })?.response?.status === 404;
+      const message = is404 ? '현재 공석인 선거구입니다.' : '의원 정보를 불러오는 중 오류가 발생했습니다.';
+      dispatch({ type: 'LOAD_ERROR', message });
+      showToast(message);
     }
   };
 
@@ -257,7 +259,7 @@ export default function Home() {
 
         {/* ── 헤더 ── */}
         <header
-          className="flex items-center justify-center gap-3 px-4 h-14 shrink-0 z-20"
+          className="flex items-center justify-center gap-3 px-4 h-14 shrink-0 z-[1010]"
           style={{
             background: 'rgba(244,247,251,0.94)',
             backdropFilter: 'blur(8px)',
@@ -561,9 +563,24 @@ export default function Home() {
                 </div>
               ) : isPanelError ? (
                 <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6">
-                  <p className="font-jakarta text-sm text-center" style={{ color: 'var(--color-on-surface-variant)' }}>
-                    {panel.status === 'error' ? panel.message : '의원 정보를 불러올 수 없습니다.'}
-                  </p>
+                  {panel.status === 'error' && panel.message === '현재 공석인 선거구입니다.' ? (
+                    <>
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: 'var(--color-on-surface-variant)', opacity: 0.5 }}>
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" strokeDasharray="3 2" />
+                      </svg>
+                      <p className="font-jakarta text-sm font-medium text-center" style={{ color: 'var(--color-on-surface-variant)' }}>
+                        현재 공석인 선거구입니다
+                      </p>
+                      <p className="font-jakarta text-xs text-center" style={{ color: 'var(--color-on-surface-variant)', opacity: 0.7 }}>
+                        보궐선거 등으로 의원이 없는 상태입니다
+                      </p>
+                    </>
+                  ) : (
+                    <p className="font-jakarta text-sm text-center" style={{ color: 'var(--color-on-surface-variant)' }}>
+                      {panel.status === 'error' ? panel.message : '의원 정보를 불러올 수 없습니다.'}
+                    </p>
+                  )}
                   <button
                     onClick={handleClose}
                     className="font-jakarta text-xs px-3 py-1.5 rounded-lg transition-colors"

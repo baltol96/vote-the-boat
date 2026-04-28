@@ -327,6 +327,9 @@ export default function GovernorMap({ onSidoClick, onSigunguClick, onReset, sele
 
         geoLayerRef.current = layer;
         setIsLoading(false);
+
+        // 탭 전환 시 패널 닫힘 애니메이션(280ms) 후 컨테이너 크기가 확정되므로 재계산
+        setTimeout(() => { if (!cancelled) map.invalidateSize(); }, 350);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : '지도 로딩 실패');
