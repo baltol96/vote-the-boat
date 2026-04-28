@@ -79,8 +79,8 @@ public class WikidataGovernorPhotoJob {
             URI sparqlUri = UriComponentsBuilder.fromHttpUrl(SPARQL_ENDPOINT)
                     .queryParam("query", SPARQL_QUERY)
                     .queryParam("format", "json")
-                    .encode()
                     .build()
+                    .encode()
                     .toUri();
 
             Map<String, Object> response;

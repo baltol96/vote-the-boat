@@ -171,6 +171,7 @@ export interface GovernorResponse {
   edu?: string;
   career1?: string;
   career2?: string;
+  photoUrl?: string;
 }
 
 export interface PledgeResponse {

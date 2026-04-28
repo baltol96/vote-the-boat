@@ -21,6 +21,7 @@ public record GovernorDetailResult(
         String edu,
         String career1,
         String career2,
+        String photoUrl,
         List<PledgeResult> pledges
 ) {
     public record PledgeResult(int order, String realmName, String title, String content) {
@@ -44,6 +45,7 @@ public record GovernorDetailResult(
                 g.getEdu(),
                 g.getCareer1(),
                 g.getCareer2(),
+                g.getPhotoUrl(),
                 pledges.stream().map(PledgeResult::from).toList()
         );
     }

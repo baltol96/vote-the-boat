@@ -76,11 +76,19 @@ export default function GovernorPanel({ huboid, onClose }: GovernorPanelProps) {
             {/* 프로필 */}
             <div className="px-5 py-5" style={{ borderBottom: SEP }}>
               <div className="flex items-start gap-4">
-                {/* 정당 색 아바타 */}
-                <div className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-lg font-bold"
-                     style={{ background: partyColor }}>
-                  {governor.name.charAt(0)}
-                </div>
+                {/* 프로필 사진 or 이니셜 아바타 */}
+                {governor.photoUrl ? (
+                  <img
+                    src={governor.photoUrl}
+                    alt={governor.name}
+                    className="w-14 h-14 rounded-xl flex-shrink-0 object-cover"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-lg font-bold"
+                       style={{ background: partyColor }}>
+                    {governor.name.charAt(0)}
+                  </div>
+                )}
                 <div className="min-w-0">
                   <p className="text-xl font-bold leading-tight">{governor.name}</p>
                   <p className="text-sm mt-0.5" style={{ color: partyColor, fontWeight: 600 }}>

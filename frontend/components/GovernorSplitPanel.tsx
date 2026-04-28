@@ -76,10 +76,15 @@ export default function GovernorSplitPanel({ sdName, onGovernorSelect, onClose }
               onClick={() => onGovernorSelect(metroGov.huboid)}
               className="flex items-center gap-3 px-4 py-3 flex-shrink-0 w-full text-left transition-opacity hover:opacity-80"
               style={{ borderBottom: SEP }}>
-              <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-sm font-bold"
-                   style={{ background: metroColor }}>
-                {metroGov.name.charAt(0)}
-              </div>
+              {metroGov.photoUrl ? (
+                <img src={metroGov.photoUrl} alt={metroGov.name}
+                     className="w-10 h-10 rounded-xl flex-shrink-0 object-cover" />
+              ) : (
+                <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-sm font-bold"
+                     style={{ background: metroColor }}>
+                  {metroGov.name.charAt(0)}
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-sm font-bold">{metroGov.name}</span>

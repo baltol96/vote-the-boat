@@ -15,7 +15,8 @@ public record GovernorResult(
         String gender,
         String edu,
         String career1,
-        String career2
+        String career2,
+        String photoUrl
 ) {
     public static GovernorResult from(LocalGovernor g) {
         return new GovernorResult(
@@ -29,7 +30,8 @@ public record GovernorResult(
                 g.getGender(),
                 g.getEdu(),
                 g.getCareer1(),
-                g.getCareer2()
+                g.getCareer2(),
+                g.getPhotoUrl()
         );
     }
 }
