@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import Header from '@/components/Header';
 import { memberApi, MemberResponse } from '@/lib/api';
 import { getPartyColor } from '@/lib/constants';
 
@@ -85,78 +86,11 @@ export default function MembersPage() {
         <h1 className="sr-only">22대 국회 전체 의원 목록 — Vote the Boat</h1>
 
         {/* ── 헤더 ── */}
-        <header
-          className="flex items-center justify-center gap-3 px-4 h-14 shrink-0 z-20"
-          style={{
-            background: 'rgba(244,247,251,0.94)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            borderBottom: `1px solid ${SEP}`,
-          }}
-        >
-          {/* 로고 */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0 select-none">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center font-manrope font-bold"
-              style={{
-                background: 'var(--color-primary-container)',
-                color: 'var(--color-primary-fixed)',
-                fontSize: '0.55rem',
-                letterSpacing: '0.04em',
-              }}
-            >
-              V/B
-            </div>
-            <div className="hidden sm:flex flex-col leading-none gap-0.5">
-              <span className="font-manrope text-sm font-bold" style={{ color: 'var(--color-on-surface)' }}>
-                Vote the Boat
-              </span>
-              <span
-                className="font-jakarta font-medium"
-                style={{ fontSize: '0.6rem', color: 'var(--color-primary)', letterSpacing: '0.04em' }}
-              >
-                22대 국회 의정활동 투명성
-              </span>
-            </div>
-          </Link>
-
-          <div className="h-5 w-px shrink-0" style={{ background: SEP }} />
-
-          {/* 페이지 탭 */}
-          <nav className="flex items-center gap-0.5 shrink-0">
-            <Link
-              href="/"
-              className="flex items-center gap-1.5 px-3 h-7 rounded-lg font-jakarta text-xs font-medium transition-colors hover:opacity-80"
-              style={{
-                color: 'var(--color-on-surface)',
-                opacity: 0.55,
-              }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-              </svg>
-              지도
-            </Link>
-            <span
-              className="flex items-center gap-1.5 px-3 h-7 rounded-lg font-jakarta text-xs font-semibold"
-              style={{
-                background: 'var(--color-primary-container)',
-                color: 'var(--color-primary-fixed)',
-              }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-              전체 의원
-            </span>
-          </nav>
-
-          <div className="h-5 w-px shrink-0" style={{ background: SEP }} />
-
+        <Header activeSection="member">
           {/* 검색바 */}
-          <div className="relative w-64">
+          <div className="relative w-56">
             <div
-              className="flex items-center gap-2 px-3 h-8 rounded-lg"
+              className="flex items-center gap-2 px-3 h-9 rounded-lg"
               style={{
                 background: 'rgba(220,228,238,0.8)',
                 border: `1px solid rgba(100,135,165,0.4)`,
@@ -199,7 +133,7 @@ export default function MembersPage() {
             </span>
             <span style={{ color: 'var(--color-on-surface)', opacity: 0.5 }}>명</span>
           </div>
-        </header>
+        </Header>
 
         {/* ── 필터 바 ── */}
         <div

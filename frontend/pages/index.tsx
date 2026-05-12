@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useReducer, useState, useRef } from 'react';
 import Head from 'next/head';
-import Link from 'next/link';
+import Header from '@/components/Header';
 import MemberPanel from '@/components/MemberPanel';
 import GovernorPanel from '@/components/GovernorPanel';
 import GovernorSplitPanel from '@/components/GovernorSplitPanel';
@@ -258,41 +258,10 @@ export default function Home() {
         <h1 className="sr-only">Vote the Boat — 국회의원·지자체장 의정활동 투명성 플랫폼</h1>
 
         {/* ── 헤더 ── */}
-        <header
-          className="flex items-center justify-center gap-3 px-4 h-14 shrink-0 z-[1010]"
-          style={{
-            background: 'rgba(244,247,251,0.94)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            borderBottom: `1px solid ${SEP}`,
-          }}
+        <Header
+          activeSection={mapMode === 'member' ? 'member' : 'governor'}
+          onModeChange={handleModeChange}
         >
-          {/* 로고 */}
-          <div className="flex items-center gap-2.5 shrink-0 select-none">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center font-manrope font-bold"
-              style={{
-                background: 'var(--color-primary-container)',
-                color: 'var(--color-primary-fixed)',
-                fontSize: '0.55rem',
-                letterSpacing: '0.04em',
-              }}
-            >
-              V/B
-            </div>
-            <div className="hidden sm:flex flex-col leading-none gap-0.5">
-              <span className="font-manrope text-sm font-bold" style={{ color: 'var(--color-on-surface)' }}>
-                Vote the Boat
-              </span>
-              <span
-                className="font-jakarta font-medium"
-                style={{ fontSize: '0.6rem', color: 'var(--color-primary)', letterSpacing: '0.04em' }}
-              >
-                22대 국회 의정활동 투명성
-              </span>
-            </div>
-          </div>
-
           {/* 검색바 */}
           <div ref={searchRef} className="relative w-64">
             <div
@@ -402,20 +371,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* 전체 의원 링크 */}
-          {mapMode === 'member' && <Link
-            href="/members"
-            className="flex items-center gap-1.5 px-2.5 h-10 rounded-lg font-jakarta text-xs font-medium shrink-0 transition-opacity hover:opacity-70"
-            style={{ color: 'var(--color-on-surface)', opacity: 0.55, border: `1px solid ${SEP}` }}
-            title="전체 의원 목록"
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            <span className="hidden sm:inline">전체 의원</span>
-          </Link>}
-
           {/* 통계 뱃지 */}
           <div
             className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full shrink-0 font-jakarta"
@@ -431,7 +386,7 @@ export default function Home() {
             <span className="font-manrope font-bold" style={{ color: 'var(--color-primary)' }}>253</span>
             <span style={{ color: 'var(--color-on-surface)', opacity: 0.5 }}>개 선거구</span>
           </div>
-        </header>
+        </Header>
 
         {/* ── 본문 ── */}
         <div className="flex flex-1 overflow-hidden relative">
@@ -439,9 +394,9 @@ export default function Home() {
           {/* 지도 영역 */}
           <div className="map-ocean-wrap flex-1 relative overflow-hidden">
 
-            {/* 지도 모드 토글 */}
+            {/* 지도 모드 토글 (모바일 전용 — 데스크톱은 헤더 메가메뉴 사용) */}
             <div
-              className="absolute top-3 left-3 z-[1000] flex items-center p-0.5 rounded-lg"
+              className="md:hidden absolute top-3 left-3 z-[1000] flex items-center p-0.5 rounded-lg"
               style={{
                 background: 'rgba(244,247,251,0.92)',
                 backdropFilter: 'blur(8px)',
@@ -452,7 +407,7 @@ export default function Home() {
             >
               <button
                 onClick={() => handleModeChange('member')}
-                className="px-3 h-7 min-h-[44px] sm:min-h-0 sm:h-7 rounded-md font-jakarta text-xs font-semibold transition-all"
+                className="px-3 min-h-[44px] rounded-md font-jakarta text-xs font-semibold transition-all"
                 style={mapMode === 'member'
                   ? { background: 'var(--color-primary)', color: '#fff' }
                   : { color: 'var(--color-on-surface)', opacity: 0.5 }}
@@ -461,7 +416,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => handleModeChange('governor')}
-                className="px-3 h-7 min-h-[44px] sm:min-h-0 sm:h-7 rounded-md font-jakarta text-xs font-semibold transition-all"
+                className="px-3 min-h-[44px] rounded-md font-jakarta text-xs font-semibold transition-all"
                 style={mapMode === 'governor'
                   ? { background: 'var(--color-primary)', color: '#fff' }
                   : { color: 'var(--color-on-surface)', opacity: 0.5 }}
